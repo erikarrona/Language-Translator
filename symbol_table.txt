@@ -1,0 +1,2 @@
+Symbol Table
+Token     Class          Value     Address   Segment   
