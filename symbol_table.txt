@@ -1,2 +1,3 @@
-Symbol Table
-Token     Class          Value     Address   Segment   
+Symbol Table: 
+Symbol 	Classification	 Value	 Address	 Segment
+[]
