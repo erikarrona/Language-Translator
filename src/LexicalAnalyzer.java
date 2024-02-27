@@ -105,21 +105,84 @@ public class LexicalAnalyzer {
 
             // Write symbol table to symbol_table.txt
             displaySymbolTable();
+            
+            // Token Classification Map
+            Map<String, String> tokenMap = new HashMap<>();
 
             // Write tokens output to output.txt
             StringBuilder tokensOutput = new StringBuilder();
             tokensOutput.append("Tokens output:\n");
-            String[] tokens = input.split("[\\s,]+"); // Splitting input by whitespace
-            for (String token : tokens) {
-            	if (!token.isEmpty()) { // Ignore empty tokens
-                tokensOutput.append(token).append("\n");
-                processInput(token);
-            	}
+            String[] tokens = input.split("\\s*(?=[,;{}])|(?<=[,;{}])\\s*|\\s+");
+
+            //max length of tokens
+            int maxLength = 0;
+            for (String token: tokens) {
+            	maxLength = Math.max(maxLength, token.length());
             }
+            
+            // Output tokens with consistent tab spacing
+            for (int i = 0; i < tokens.length; i++) {
+                String token = tokens[i];
+                if (!token.isEmpty()) { // Ignore empty tokens
+                    String classification = getClassification(token, tokens, i); // Call getClassification method with additional arguments
+                    tokenMap.put(token, classification);
+                    tokensOutput.append(String.format("%-" + (maxLength + 2) + "s", token)).append(" | ").append(classification).append("\n"); // Append token and classification to output
+                }
+            }
+
             writeTokensOutput(tokensOutput.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    private String getClassification(String token, String[] tokens, int currentIndex) {
+        if (token.equalsIgnoreCase("CLASS")) {
+            return "$class";
+        } else if (currentIndex > 0 && (tokens[currentIndex - 1].equalsIgnoreCase("CONST") || tokens[currentIndex - 1].equals(","))) {
+            // Check if the token is a constant variable (contains only uppercase letters)
+            if (token.matches("[a-zA-Z][a-zA-Z0-9]*")) {
+                return "ConstVar";
+            }
+        } else if (token.matches("[0-9]+")) {
+            return "Numeric Literal";
+        } else if (token.equals("if") || token.equals("else")) {
+            return "Conditional";
+        } else if (token.equals("=")) {
+            return "$equal";
+        } else if (token.equals("+")) {
+            return "$addop";
+        } else if (token.equals("*")) {
+            return "$mop";
+        } else if (token.equals("-")) {
+            return "$subop";
+        } else if (token.equals("{")) {
+            return "$LB";
+        } else if (token.equals("}")) {
+            return "$RB";
+        } else if (token.equals(";")) {
+            return "$semi";
+        } else if (token.equals(",")) {
+            return "$comma";
+        } else if (token.equals("VAR")) {
+            return "$VAR";
+        } else if (token.equals("CONST")) {
+            return "$CONST";
+        } else if (currentIndex + 1 < tokens.length && tokens[currentIndex + 1].equals("=")) {
+            // Check if the token is a variable (not followed by an equal sign)
+        	if (token.matches("[a-zA-Z][a-zA-Z0-9]*")) {
+        		return "Variable";
+        	}
+        } else {
+            return "Identifier";
+        }
+        return "$class";
+    }
+
+
+
+    private void FSA(String token, String[] tokens) {
+    	
     }
 
     public static void main(String[] args) {

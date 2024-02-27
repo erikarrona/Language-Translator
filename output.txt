@@ -1,28 +1,35 @@
 Tokens output:
-CLASS
-Pgm1
-{
-CONST
-M
-=
-13
-N
-=
-56;
-VAR
-X
-Y
-Z;
-Y
-=
-97;
-X
-=
-M
-*
-N
-+
-18
--
-Y;
-}
+CLASS   | $class
+Pgm1    | Identifier
+{       | $LB
+CONST   | $CONST
+M       | ConstVar
+=       | $equal
+13      | Numeric Literal
+,       | $comma
+N       | ConstVar
+=       | $equal
+56      | Numeric Literal
+;       | $semi
+VAR     | $VAR
+X       | Identifier
+,       | $comma
+Y       | ConstVar
+,       | $comma
+Z       | ConstVar
+;       | $semi
+Y       | Variable
+=       | $equal
+97      | Numeric Literal
+;       | $semi
+X       | Variable
+=       | $equal
+M       | Identifier
+*       | $mop
+N       | Identifier
++       | $addop
+18      | Numeric Literal
+-       | $subop
+Y       | Identifier
+;       | $semi
+}       | $RB
