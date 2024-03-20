@@ -1,35 +1,21 @@
-Tokens output:
-CLASS   | $class
-Pgm1    | Identifier
-{       | $LB
-CONST   | $CONST
-M       | ConstVar
-=       | $equal
-13      | Numeric Literal
-,       | $comma
-N       | ConstVar
-=       | $equal
-56      | Numeric Literal
-;       | $semi
-VAR     | $VAR
-X       | Identifier
-,       | $comma
-Y       | ConstVar
-,       | $comma
-Z       | ConstVar
-;       | $semi
-Y       | Variable
-=       | $equal
-97      | Numeric Literal
-;       | $semi
-X       | Variable
-=       | $equal
-M       | Identifier
-*       | $mop
-N       | Identifier
-+       | $addop
-18      | Numeric Literal
--       | $subop
-Y       | Identifier
-;       | $semi
-}       | $RB
+CLASS   	 $class
+Pgm1    	 $program
+{       	 ${
+CONST   	 $const
+M       	 Var
+=       	 $assign
+13      	 NumLit
+,       	 $,
+N       	 Var
+56      	 NumLit
+;       	 $;
+VAR     	 $var
+X       	 Var
+Y       	 Var
+Z       	 Var
+97      	 NumLit
+*       	 $*op
++       	 $+op
+18      	 NumLit
+-       	 $-op
+}       	 $}
