@@ -1,6 +1,24 @@
-Symbol	Classification	Value	Address	Segment
-1	CLASS	$program	null	0	CS
-2	13	NumLit	13	0	DS
-3	56	NumLit	56	2	DS
-4	97	NumLit	97	4	DS
-5	18	NumLit	18	6	DS
+CLASS	$Class	?	DS
+Pgm1	$program name	0	CS
+{	$LB	?	DS
+CONST	$Const	?	DS
+=	$assignment	?	DS
+13	NumLit	?	DS
+,	$comma	?	DS
+=	$assignment	?	DS
+56	NumLit	?	DS
+;	$semi	?	DS
+VAR	$Variable	?	DS
+,	$comma	?	DS
+,	$comma	?	DS
+;	$semi	?	DS
+=	$assignment	?	DS
+97	NumLit	?	DS
+;	$semi	?	DS
+=	$assignment	?	DS
+*	$mop	?	DS
++	$addop	?	DS
+18	NumLit	?	DS
+-	$addop	?	DS
+;	$semi	?	DS
+}	$RB	?	DS

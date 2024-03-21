@@ -3,6 +3,10 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class LexicalAnalyzer {
     private int transitionTable[][];
@@ -74,7 +78,6 @@ public class LexicalAnalyzer {
                         }
 
                         writer.write(token + "\t" + classification + "\n");
-                        System.out.println("Added token: " + token + "\t" + classification); // Print the current token and its classification
                     }
                 }
             }
@@ -130,10 +133,40 @@ public class LexicalAnalyzer {
         }
     }
 
+    public void generateSymbolTable(String tokensFile, String symbolTableFile) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(tokensFile));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(symbolTableFile))) {
 
+            Map<String, String> symbolTable = new HashMap<>();
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("\t");
+                String token = parts[0];
+                String classification = parts[1];
+
+                // Check if it's a variable, constant, or program name
+                if (classification.startsWith("$")) {
+                    // For program name, set the segment as CS (Code Segment)
+                    if (classification.equals("$program name")) {
+                        writer.write(token + "\t" + classification + "\t" + "0" + "\t" + "CS\n");
+                    } else {
+                        // For constant or variable, set the segment as DS (Data Segment)
+                        writer.write(token + "\t" + classification + "\t" + "?" + "\t" + "DS\n");
+                    }
+                } else if (classification.equals("NumLit")) {
+                    // For numerical literals, set the segment as DS (Data Segment)
+                    writer.write(token + "\t" + classification + "\t" + "?" + "\t" + "DS\n");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
         analyzer.analyze("input.txt", "tokens.txt");
+        analyzer.generateSymbolTable("tokens.txt", "symbol_table.txt");
     }
 }
