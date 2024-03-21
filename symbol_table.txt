@@ -1,11 +1,6 @@
 Symbol	Classification	Value	Address	Segment
-1	Pgm1	$program	null	0	CS
-2	M	Var	null	0	DS
-3	13	NumLit	13	2	DS
-4	N	Var	null	4	DS
-5	56	NumLit	56	6	DS
-6	X	Var	null	8	DS
-7	Y	Var	null	10	DS
-8	Z	Var	null	12	DS
-9	97	NumLit	97	14	DS
-10	18	NumLit	18	16	DS
+1	CLASS	$program	null	0	CS
+2	13	NumLit	13	0	DS
+3	56	NumLit	56	2	DS
+4	97	NumLit	97	4	DS
+5	18	NumLit	18	6	DS
