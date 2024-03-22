@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,7 +85,7 @@ public class LexicalAnalyzer {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }	
 
 
     private String classifyToken(String token, String nextToken) {
@@ -137,26 +138,38 @@ public class LexicalAnalyzer {
         try (BufferedReader reader = new BufferedReader(new FileReader(tokensFile));
              BufferedWriter writer = new BufferedWriter(new FileWriter(symbolTableFile))) {
 
-            Map<String, String> symbolTable = new HashMap<>();
-
+            Map<String, Boolean> addedTokens = new LinkedHashMap<>();
+            int codeSegment = 0;
+            int dataSegment = 0;
+            writer.write(String.format("%-10s%-20s%-10s%-10s%-10s\n", "Symbol", "Classification", "Value", "Address", "Segment"));
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split("\t");
                 String token = parts[0];
                 String classification = parts[1];
 
-                // Check if it's a variable, constant, or program name
+                // Check if the token has already been added
+                if (addedTokens.containsKey(token)) {
+                    continue; // Skip this token if it has already been added
+                } else {
+                    addedTokens.put(token, true); // Mark the token as added
+                }
+
+                // Add the token to the symbol table based on its classification
                 if (classification.startsWith("$")) {
                     // For program name, set the segment as CS (Code Segment)
                     if (classification.equals("$program name")) {
-                        writer.write(token + "\t" + classification + "\t" + "0" + "\t" + "CS\n");
-                    } else {
-                        // For constant or variable, set the segment as DS (Data Segment)
-                        writer.write(token + "\t" + classification + "\t" + "?" + "\t" + "DS\n");
+                        writer.write(String.format("%-10s%-20s%-10s%-10s%-10s\n", token, classification, "null", codeSegment, "CS"));
+                        codeSegment += 2;
                     }
                 } else if (classification.equals("NumLit")) {
                     // For numerical literals, set the segment as DS (Data Segment)
-                    writer.write(token + "\t" + classification + "\t" + "?" + "\t" + "DS\n");
+                    writer.write(String.format("%-10s%-20s%-10s%-10s%-10s\n", token, classification, token, dataSegment, "DS"));
+                    dataSegment += 2;
+                } else if (classification.equals("ConstVar") || classification.equals("Var")) {
+                    // For constants and variables, set the segment as DS (Data Segment)
+                    writer.write(String.format("%-10s%-20s%-10s%-10s%-10s\n", token, classification, "?", dataSegment, "DS"));
+                    dataSegment += 2;
                 }
             }
         } catch (IOException e) {
