@@ -4,12 +4,16 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LexicalAnalyzer {
     private int stateTable[][];
+    private Map<String, String> classifiedIdentifiers;
 
     public LexicalAnalyzer() {
+    	classifiedIdentifiers = new HashMap<>();
         // Initialize the state transition table
         stateTable = new int[28][17];
 
@@ -355,22 +359,32 @@ public class LexicalAnalyzer {
     }
     
     public String classifyToken(String token, List<String> tokens) {
+
+    	if (classifiedIdentifiers.containsKey(token)) {
+            // If yes, return its existing classification
+            return classifiedIdentifiers.get(token);
+        }
     	
     	if (token.matches("[a-zA-Z][a-zA-Z0-9_]*")){
     		if(token.toLowerCase().matches("class")) {
+    			classifiedIdentifiers.put(token, "$Class");
     			return "$Class";
     		}
     		int index = tokens.indexOf(token); // Get the index of the current token
     		System.out.println(token + "'s Index: " + index);
             if (index > 0 && tokens.get(index - 1).toLowerCase().equals("class")) {
+            	classifiedIdentifiers.put(token, "$program name");
                 return "$Program Name"; 
             } else if(index < tokens.size() - 2 && tokens.get(index + 1).equals("=") && isInteger(tokens.get(index + 2))){
+            	classifiedIdentifiers.put(token, "ConstVar");
             	return "ConstVar";// Return the classification for ConstVar
-            } else {
+            } else if (index > 0){
+            	classifiedIdentifiers.put(token, "Var");
                 return "Var"; // Return the classification for VAR
             }
     	}
     	if(token.matches("[0-9]*")) {
+    		classifiedIdentifiers.put(token, "NumLit");
     		return "NumLit";
     		
     	}
@@ -438,6 +452,8 @@ public class LexicalAnalyzer {
                 for (String token : tokens) {
                     // Classify the token
                     String classification = analyzer.classifyToken(token, tokens);
+                    
+                    
                     // Write the token and its classification to the output file
                     bw.write(token + "\t" + classification);
                     bw.newLine();
