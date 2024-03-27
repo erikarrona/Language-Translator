@@ -5,15 +5,30 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class LexicalAnalyzer {
     private int stateTable[][];
     private Map<String, String> classifiedIdentifiers;
+    private Map<String, String> symbolValue;
+    private Map<String, String[]> symbolTable;
+    private Set<String> assignedValues;
+    private Set<String> addedSymbols;
+    private int dataAddress;
+    private int codeAddress;
 
     public LexicalAnalyzer() {
     	classifiedIdentifiers = new HashMap<>();
+    	symbolValue = new HashMap<>();
+    	symbolTable = new HashMap<>();
+    	addedSymbols = new HashSet<>();
+    	assignedValues = new HashSet<>();
+        dataAddress = 0;
+        codeAddress = 0;
+        
         // Initialize the state transition table
         stateTable = new int[28][17];
 
@@ -47,62 +62,37 @@ public class LexicalAnalyzer {
         }
 
         // Row 3: Transition for Digits
-        stateTable[3][0] = 4;  // Letter
-        stateTable[3][1] = 3;  // Digit
-        stateTable[3][2] = 4;  // "*"
-        stateTable[3][3] = 4;  // "/"
-        stateTable[3][4] = 4; // "="
-        stateTable[3][5] = 4; // "<"
-        stateTable[3][6] = 0;  // Whitespace
-        stateTable[3][7] = 1;  // Other
-        stateTable[3][8] = 4; // "{"
-        stateTable[3][9] = 4; // "}"
-        stateTable[3][10] = 4; // "("
-        stateTable[3][11] = 4; // ")"
-        stateTable[3][12] = 4; // ","
-        stateTable[3][13] = 4; // ";"
-        stateTable[3][14] = 4; // "+"
-        stateTable[3][15] = 4; // "-"
-        stateTable[3][16] = 4; // ">"
+        for(int col = 0; col < 17; col++) {
+        	if(col == 1) {
+        		stateTable[3][col] = 3;
+        	} else if(col == 6) {
+        		stateTable[3][col] = 0;
+        	} else if(col == 7) {
+        		stateTable[3][col] = 1;
+        	} else {
+        		stateTable[3][col] = 4;
+        	}
+        }
+        
 
         // Row 4: Integer state
-        stateTable[4][0] = 0;  // Letter
-        stateTable[4][1] = 0;  // Digit
-        stateTable[4][2] = 0;  // "*"
-        stateTable[4][3] = 0;  // "/"
-        stateTable[4][4] = 0;  // "="
-        stateTable[4][5] = 0;  // "<"
-        stateTable[4][6] = 0;  // Whitespace
-        stateTable[4][7] = 1;  // Other
-        stateTable[4][8] = 0;  // "{"
-        stateTable[4][9] = 0;  // "}"
-        stateTable[4][10] = 0; // "("
-        stateTable[4][11] = 0; // ")"
-        stateTable[4][12] = 0; // ","
-        stateTable[4][13] = 0; // ";"
-        stateTable[4][14] = 0; // "+"
-        stateTable[4][15] = 0; // "-"
-        stateTable[4][16] = 0; // ">"
+        for(int col = 0; col < 17; col++) {
+        	stateTable[4][col] = 4;
+        }
 
 
         // Rows 5 Variable state transition
-        stateTable[5][0] = 5;  // Letter
-        stateTable[5][1] = 5;  // Digit
-        stateTable[5][2] = 6;  // "*"
-        stateTable[5][3] = 6;  // "/"
-        stateTable[5][4] = 6; // "="
-        stateTable[5][5] = 6; // "<"
-        stateTable[5][6] = 0;  // Whitespace
-        stateTable[5][7] = 1;  // Other
-        stateTable[5][8] = 6; // "{"
-        stateTable[5][9] = 6; // "}"
-        stateTable[5][10] = 6; // "("
-        stateTable[5][11] = 6; // ")"
-        stateTable[5][12] = 6; // ","
-        stateTable[5][13] = 6; // ";"
-        stateTable[5][14] = 6; // "+"
-        stateTable[5][15] = 6; // "-"
-        stateTable[5][16] = 6; // ">"
+        for(int col = 0; col < 17; col++) {
+        	if(col == 0 || col == 1) {
+        		stateTable[5][col] = 5;
+        	} else if(col == 6) {
+        		stateTable[5][col] = 0;
+        	} else if(col == 7) {
+        		stateTable[5][col] = 1;
+        	} else {
+        		stateTable[5][col] = 6;
+        	}
+        }
 
         // Row 6: Variable state
         for(int col = 0; col < 17; col++) {
@@ -115,50 +105,34 @@ public class LexicalAnalyzer {
         	}
         }
         
-        // Row 7: Transition
-        stateTable[7][0] = 10;  // Letter
-        stateTable[7][1] = 10;  // Digit
-        stateTable[7][2] = 8;  // "*"
-        stateTable[7][3] = 10;  // "/"
-        stateTable[7][4] = 10; // "="
-        stateTable[7][5] = 10; // "<"
-        stateTable[7][6] = 0;  // Whitespace
-        stateTable[7][7] = 1;  // Other
-        stateTable[7][8] = 10; // "{"
-        stateTable[7][9] = 10; // "}"
-        stateTable[7][10] = 10; // "("
-        stateTable[7][11] = 10; // ")"
-        stateTable[7][12] = 10; // ","
-        stateTable[7][13] = 10; // ";"
-        stateTable[7][14] = 10; // "+"
-        stateTable[7][15] = 10; // "-"
-        stateTable[7][16] = 10; // ">"
+        // Row 7: Transition for "/"
+        for(int col = 0; col < 17; col ++) {
+        	if(col == 2) {
+        		stateTable[7][col] = 8;
+        	} else if (col == 7) {
+        		stateTable[7][col] = 1;
+        	} else {
+        		stateTable[7][col] = 10;
+        	}
+        }
         
-        // Row 8:
-        stateTable[8][0] = 8;  // Letter
-        stateTable[8][1] = 8;  // Digit
-        stateTable[8][2] = 9;  // "*"
-        stateTable[8][3] = 8;  // "/"
-        stateTable[8][4] = 8; // "="
-        stateTable[8][5] = 8; // "<"
-        stateTable[8][6] = 0;  // Whitespace
-        stateTable[8][7] = 1;  // Other
-        stateTable[8][8] = 8; // "{"
-        stateTable[8][9] = 8; // "}"
-        stateTable[8][10] = 8; // "("
-        stateTable[8][11] = 8; // ")"
-        stateTable[8][12] = 8; // ","
-        stateTable[8][13] = 8; // ";"
-        stateTable[8][14] = 8; // "+"
-        stateTable[8][15] = 8; // "-"
-        stateTable[8][16] = 8; // ">"
+        // Row 8: elimnitate comments /* o o o */
+        for(int col = 0; col < 17; col ++) {
+        	if(col == 2) {
+        		stateTable[8][col] = 9;
+        	} else if (col == 7) {
+        		stateTable[8][col] = 1;
+        	} else {
+        		stateTable[8][col] = 8;
+        	}
+        }
         
-        // Row 9: Transition for state 9
+        // Row 9: read comment
         for (int col = 0; col < 17; col++) {
-            if (col == 2) {
-                stateTable[9][col] = 0; // Transition to state 0 on "*" input
-            } else if(col == 6) {
-            	stateTable[9][col] = 0;
+            if (col == 3) {
+                stateTable[9][col] = 0; // Transition to state 0 on "/" input
+            } else if(col == 7) {
+            	stateTable[9][col] = 1;
             } else {
                 stateTable[9][col] = 8; // Transition to state 8 for all other inputs
             }
@@ -170,23 +144,17 @@ public class LexicalAnalyzer {
         }
         
         // Row 11: Transition for state 11
-        stateTable[11][0] = 12;  // Letter
-        stateTable[11][1] = 12;  // Digit
-        stateTable[11][2] = 12;   // "*"
-        stateTable[11][3] = 12;   // "/"
-        stateTable[11][4] = 13;  // "="
-        stateTable[11][5] = 12;  // "<"
-        stateTable[11][6] = 0;  // Whitespace
-        stateTable[11][7] = 1;  // Other
-        stateTable[11][8] = 12;  // "{"
-        stateTable[11][9] = 12;  // "}"
-        stateTable[11][10] = 12;  // "("
-        stateTable[11][11] = 12;  // ")"
-        stateTable[11][12] = 12;  // ","
-        stateTable[11][13] = 12;  // ";"
-        stateTable[11][14] = 12;  // "+"
-        stateTable[11][15] = 12;  // "-"
-        stateTable[11][16] = 12;  // ">"
+        for(int col = 0; col < 17; col++) {
+        	if(col == 4) {
+                stateTable[11][col] = 13;  // "="
+        	} else if(col == 6) {
+                stateTable[11][col] = 0;  // Whitespace
+        	} else if(col == 7) {
+        		stateTable[11][col] = 1;  // Other
+        	} else {
+        		stateTable[11][col] = 12;
+        	}
+        }
         
         // Row 12: "=" $assignment
         for (int col = 0; col < 17; col++) {
@@ -285,9 +253,34 @@ public class LexicalAnalyzer {
         List<String> tokens = new ArrayList<>();
         StringBuilder currentToken = new StringBuilder();
         int currentState = 0;
+        boolean inComment = false; // Flag to track whether we're inside a comment
 
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
+
+            // Skip characters inside comments
+            if (inComment) {
+                if (c == '*' && i < input.length() - 1 && input.charAt(i + 1) == '/') {
+                    inComment = false; // End of multi-line comment
+                    i++; // Skip the next character '/'
+                }
+                continue; // Skip processing this character
+            }
+
+            // Check for comment start
+            if (c == '/' && i < input.length() - 1) {
+                char nextChar = input.charAt(i + 1);
+                if (nextChar == '/') {
+                    // Single-line comment found, skip remaining characters in the line
+                    break;
+                } else if (nextChar == '*') {
+                    // Multi-line comment found, set flag to skip characters until the end of comment
+                    inComment = true;
+                    i++; // Skip the next character '*'
+                    continue; // Skip processing this character
+                }
+            }
+
             int inputIndex = getInputIndex(c);
             int nextState = stateTable[currentState][inputIndex];
 
@@ -315,6 +308,7 @@ public class LexicalAnalyzer {
 
         return tokens;
     }
+
 
     private boolean isPunctuation(char c) {
         return c == '{' || c == '}' || c == '(' || c == ')' || c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/';
@@ -371,12 +365,13 @@ public class LexicalAnalyzer {
     			return "$Class";
     		}
     		int index = tokens.indexOf(token); // Get the index of the current token
-    		System.out.println(token + "'s Index: " + index);
+    		
             if (index > 0 && tokens.get(index - 1).toLowerCase().equals("class")) {
             	classifiedIdentifiers.put(token, "$program name");
                 return "$Program Name"; 
             } else if(index < tokens.size() - 2 && tokens.get(index + 1).equals("=") && isInteger(tokens.get(index + 2))){
             	classifiedIdentifiers.put(token, "ConstVar");
+            	symbolValue.put(token, tokens.get(index + 2));
             	return "ConstVar";// Return the classification for ConstVar
             } else if (index > 0){
             	classifiedIdentifiers.put(token, "Var");
@@ -434,35 +429,135 @@ public class LexicalAnalyzer {
             return false;
         }
     }
-
-
+    
+    private void writeTokensFile(String inputFile, String outputFile) {
+    	try (	BufferedReader br = new BufferedReader(new FileReader(inputFile));
+    			BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+    		String line;
+    		while ((line = br.readLine()) != null) {
+    			// Process each line using the lexical analyzer
+    			List<String> tokens = processTokens(line);
+    			// Output the tokens for this line to the file
+    			for (String token : tokens) {
+    				// Classify the token
+    				String classification = classifyToken(token, tokens);   
+                       // Write the token and its classification to the output file                       
+    				bw.write(token + "\t" + classification);                       
+    				bw.newLine();
+    				}
+    			}
+    		System.out.println("Tokens with classifications written to " + outputFile);
+    		} 
+    	catch (IOException e) {
+    		e.printStackTrace();
+    	}
+    	
+    }
 
     public static void main(String[] args) {
-        String inputFilename = "input.txt"; // Replace "input.txt" with the path to your input file
-        String outputFilename = "tokens.txt"; // Output file name
+    	
+    	String inputFilename = "input.txt";
+        String tokensFile = "tokens.txt";
+        String symbolTable = "symbolTable.txt";
+
+        LexicalAnalyzer analyzer = new LexicalAnalyzer();
+        analyzer.writeTokensFile(inputFilename, tokensFile);
+        analyzer.writeSymbolTable(tokensFile, symbolTable);
         
-        try (BufferedReader br = new BufferedReader(new FileReader(inputFilename));
-             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFilename))) {
-            LexicalAnalyzer analyzer = new LexicalAnalyzer(); // Create an instance of your lexical analyzer
-            String line;
-            while ((line = br.readLine()) != null) {
-                // Process each line using the lexical analyzer
-                List<String> tokens = analyzer.processTokens(line);
-                // Output the tokens for this line to the file
-                for (String token : tokens) {
-                    // Classify the token
-                    String classification = analyzer.classifyToken(token, tokens);
-                    
-                    
-                    // Write the token and its classification to the output file
-                    bw.write(token + "\t" + classification);
-                    bw.newLine();
+    }
+    
+    public void writeSymbolTable(String tokensFile, String outputFile) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+            // Define column widths
+            int symbolWidth = 10;
+            int classificationWidth = 15;
+            int valueWidth = 10;
+            int addressWidth = 10;
+            int segmentWidth = 10;
+
+            // Write header with padding
+            bw.write(String.format("%-" + symbolWidth + "s", "Symbol"));
+            bw.write(String.format("%-" + classificationWidth + "s", "Classification"));
+            bw.write(String.format("%-" + valueWidth + "s", "Value"));
+            bw.write(String.format("%-" + addressWidth + "s", "Address"));
+            bw.write(String.format("%-" + segmentWidth + "s", "Segment"));
+            bw.newLine();
+
+            // Set to store symbols already added to the table
+            Set<String> addedSymbols = new HashSet<>();
+
+            List<String> tokens = new ArrayList<>();
+            try (BufferedReader br = new BufferedReader(new FileReader(tokensFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    tokens.add(line.trim());
                 }
             }
-            System.out.println("Tokens with classifications written to " + outputFilename);
+
+            String segment = "$DS"; // Start with Data Segment
+
+            for (String token : tokens) {
+                // Split the token into symbol and classification parts
+                String[] parts = token.split("\t");
+                if (parts.length != 2) {
+                    System.out.println("Invalid token format: " + token);
+                    continue; // Skip invalid tokens
+                }
+                String symbol = parts[0];
+                String classification = parts[1];
+
+                // Find value for symbol
+                String value = "?"; // Initialize value as unknown by default
+                if (classification.equals("ConstVar")) {
+                    value = symbolValue.getOrDefault(symbol, "?");
+                    assignedValues.add(value);
+                } else if (classification.equals("NumLit")) {
+                    // Check if the value corresponds to a symbol that has already been assigned
+                    if (assignedValues.contains(symbol)) {
+                        continue; // Skip treating it as a NumLit
+                    }
+                    // If not, update the assigned values set for NumLit
+                    assignedValues.add(symbol);
+                    value = symbol; // Value is the token itself
+                }
+
+                // Find address for symbol
+                String address;
+                if (classification.equals("$Program Name")) {
+                    address = String.valueOf(codeAddress);
+                    codeAddress += 2;
+                    value = ""; // Clear value for program name
+                    segment = "$CS"; // Switch to Code Segment for program name
+                } else if (!classification.startsWith("$")) {
+                    address = String.valueOf(dataAddress);
+                    dataAddress += 2; // Increment data address by 2
+                    segment = "$DS";
+                } else {
+                    address = "?"; // For other segments, address is unknown
+                }
+
+                // Add the symbol to the symbol table only if it's not already added
+                if (!addedSymbols.contains(symbol)) {
+                    // Write into symbol table
+                	if (!classification.startsWith("$") || classification.equals("$Program Name")) {
+	                    bw.write(String.format("%-" + symbolWidth + "s", symbol));
+	                    bw.write(String.format("%-" + classificationWidth + "s", classification));
+	                    bw.write(String.format("%-" + valueWidth + "s", value));
+	                    bw.write(String.format("%-" + addressWidth + "s", address));
+	                    bw.write(String.format("%-" + segmentWidth + "s", segment));
+	                    bw.newLine();
+                	}
+
+                    // Add the symbol to the set of added symbols
+                    addedSymbols.add(symbol);
+                }
+            }
+
+            System.out.println("Symbol table written to " + outputFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
 
 }

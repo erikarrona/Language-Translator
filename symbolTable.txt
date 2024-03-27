@@ -1,0 +1,8 @@
+Symbol    Classification Value     Address   Segment   
+PGM1      $Program Name            0         $CS       
+M         ConstVar       7         0         $DS       
+N         ConstVar       85        2         $DS       
+X         Var            ?         4         $DS       
+Y         Var            ?         6         $DS       
+Z         Var            ?         8         $DS       
+12        NumLit         12        18        $DS       

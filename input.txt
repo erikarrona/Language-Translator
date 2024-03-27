@@ -1,4 +1,6 @@
-Class PGM1{ 
+Class PGM1{ // using first FSA
 CONST M = 7, N = 85;
 VAR X, Y, Z;
 X = M + Y * Z + 12;
+
+}
