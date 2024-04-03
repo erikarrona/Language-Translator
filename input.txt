@@ -1,6 +1,8 @@
-Class PGM1{ // using first FSA
-CONST M = 7, N = 85;
-VAR X, Y, Z;
-X = M + Y * Z + 12;
+CLASS Pgm1 {
+	CONST M = 13, N = 56, L = 7;
+	VAR X, Y, Z;
+	/* meow meow meow meow */
 
+	Y = 97;
+	X = M * N + 18 - Y / 3;
 }

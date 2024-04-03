@@ -14,7 +14,6 @@ public class LexicalAnalyzer {
     private int stateTable[][];
     private Map<String, String> classifiedIdentifiers;
     private Map<String, String> symbolValue;
-    private Map<String, String[]> symbolTable;
     private Set<String> assignedValues;
     private Set<String> addedSymbols;
     private int dataAddress;
@@ -23,7 +22,6 @@ public class LexicalAnalyzer {
     public LexicalAnalyzer() {
     	classifiedIdentifiers = new HashMap<>();
     	symbolValue = new HashMap<>();
-    	symbolTable = new HashMap<>();
     	addedSymbols = new HashSet<>();
     	assignedValues = new HashSet<>();
         dataAddress = 0;
@@ -35,8 +33,8 @@ public class LexicalAnalyzer {
         // Row 0: Transition from state 0
         stateTable[0][0] = 5;  // Letter
         stateTable[0][1] = 3;  // Digit
-        stateTable[0][2] = 1;  // "*"
-        stateTable[0][3] = 1;  // "/"
+        stateTable[0][2] = 2;  // "*"
+        stateTable[0][3] = 7;  // "/"
         stateTable[0][4] = 11; // "="
         stateTable[0][5] = 14; // "<"
         stateTable[0][6] = 0;  // Whitespace
@@ -62,31 +60,27 @@ public class LexicalAnalyzer {
         }
 
         // Row 3: Transition for Digits
-        for(int col = 0; col < 17; col++) {
-        	if(col == 1) {
-        		stateTable[3][col] = 3;
-        	} else if(col == 6) {
-        		stateTable[3][col] = 0;
-        	} else if(col == 7) {
-        		stateTable[3][col] = 1;
-        	} else {
-        		stateTable[3][col] = 4;
-        	}
+        for (int col = 0; col < 17; col++) {
+            if (col == 1) {
+                stateTable[3][col] = 3;
+            } else if (col == 7){
+            	stateTable[3][col] = 1;
+            } else {
+                stateTable[3][col] = 4; 
+            }
         }
-        
 
         // Row 4: Integer state
-        for(int col = 0; col < 17; col++) {
-        	stateTable[4][col] = 4;
+        for (int col = 0; col < 17; col++) {
+            stateTable[4][col] = 4; // Integer state remains in itself for all inputs
         }
+
 
 
         // Rows 5 Variable state transition
         for(int col = 0; col < 17; col++) {
         	if(col == 0 || col == 1) {
         		stateTable[5][col] = 5;
-        	} else if(col == 6) {
-        		stateTable[5][col] = 0;
         	} else if(col == 7) {
         		stateTable[5][col] = 1;
         	} else {
@@ -96,13 +90,8 @@ public class LexicalAnalyzer {
 
         // Row 6: Variable state
         for(int col = 0; col < 17; col++) {
-        	if (col == 6) {
-        		stateTable[6][col] = 0;
-        	}else if (col == 7) {
-        		stateTable[6][col] = 1;
-        	} else {
-        		stateTable[6][col] = 6;
-        	}
+        	stateTable[6][col] = 6;
+        	
         }
         
         // Row 7: Transition for "/"
@@ -147,8 +136,6 @@ public class LexicalAnalyzer {
         for(int col = 0; col < 17; col++) {
         	if(col == 4) {
                 stateTable[11][col] = 13;  // "="
-        	} else if(col == 6) {
-                stateTable[11][col] = 0;  // Whitespace
         	} else if(col == 7) {
         		stateTable[11][col] = 1;  // Other
         	} else {
@@ -169,8 +156,6 @@ public class LexicalAnalyzer {
         for (int col = 0; col < 17; col++) {
             if (col == 4) {
                 stateTable[14][col] = 16; // Transition to state 16 on "<" input
-            } else if(col == 6) {
-            	stateTable[14][col] = 0;
             } else {
                 stateTable[14][col] = 15; // Transition to state 15 for all other inputs
             }
@@ -230,8 +215,6 @@ public class LexicalAnalyzer {
         for (int col = 0; col < 17; col++) {
             if (col == 4) {
                 stateTable[25][col] = 27; // Transition to state 27 on "=" input
-            } else if(col == 6) {
-            	stateTable[25][col] = 0;
             } else {
                 stateTable[25][col] = 26; // Transition to state 26 for all other inputs
             }
@@ -249,210 +232,175 @@ public class LexicalAnalyzer {
         
     }
     
-    public List<String> processTokens(String input) {
-        List<String> tokens = new ArrayList<>();
-        StringBuilder currentToken = new StringBuilder();
-        int currentState = 0;
-        boolean inComment = false; // Flag to track whether we're inside a comment
+    private boolean isDelimeter(char c) {
+        String punctuationAndOperators = ",;";
+        return punctuationAndOperators.indexOf(c) != -1;
+    }
 
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-
-            // Skip characters inside comments
-            if (inComment) {
-                if (c == '*' && i < input.length() - 1 && input.charAt(i + 1) == '/') {
-                    inComment = false; // End of multi-line comment
-                    i++; // Skip the next character '/'
-                }
-                continue; // Skip processing this character
+    private List<String> processTokens(String line) {
+        List<String> tokenList = new ArrayList<>();
+        int strNdx = 0;
+        int strLen = line.length();
+        while (strNdx < strLen) {
+            StringBuilder tokenBuilder = new StringBuilder();
+            // Skip leading blanks
+            while (strNdx < strLen && (line.charAt(strNdx) == ' ' || line.charAt(strNdx) == '\t' || line.charAt(strNdx) == '\n')) {
+                strNdx++;
             }
-
-            // Check for comment start
-            if (c == '/' && i < input.length() - 1) {
-                char nextChar = input.charAt(i + 1);
-                if (nextChar == '/') {
-                    // Single-line comment found, skip remaining characters in the line
-                    break;
-                } else if (nextChar == '*') {
-                    // Multi-line comment found, set flag to skip characters until the end of comment
-                    inComment = true;
-                    i++; // Skip the next character '*'
-                    continue; // Skip processing this character
-                }
+            // Build token delimited by a space or end of string or punctuation
+            while (strNdx < strLen && line.charAt(strNdx) != ' ' && !isDelimeter(line.charAt(strNdx))) {
+                tokenBuilder.append(line.charAt(strNdx));
+                strNdx++;
             }
+            // Add token to the list
+            if (tokenBuilder.length() > 0) {
+            	tokenBuilder.append(' ');
+                tokenList.add(tokenBuilder.toString());
+            }
+            // Check if the current character is a punctuation or operator
+            if (strNdx < strLen && isDelimeter(line.charAt(strNdx))) {
+            	tokenBuilder.append(' ');
+                tokenList.add(Character.toString(line.charAt(strNdx)));
+                strNdx++;
+            }
+        }
+        return tokenList;
+    }
 
-            int inputIndex = getInputIndex(c);
-            int nextState = stateTable[currentState][inputIndex];
-
-            if (nextState != 0 && isPunctuation(c) == false) {
-                currentToken.append(c);
-                currentState = nextState;
+    
+ 
+    
+    private String classifyToken(String token) {
+    	
+    	
+    	
+        int currentState = 0; // Start at state 0
+        for (char c : token.toCharArray()) {
+            int column;
+            if (Character.isLetter(c)) {
+                column = 0; // Letter
+            } else if (Character.isDigit(c)) {
+                column = 1; // Digit
+            } else if (c == '*') {
+                column = 2; // "*"
+            } else if (c == '/') {
+                column = 3; // "/"
+            } else if (c == '=') {
+                column = 4; // "="
+            } else if (c == '<') {
+                column = 5; // "<"
+            } else if (Character.isWhitespace(c)) {
+                column = 6; // Whitespace
+            } else if (c == '{') {
+                column = 8; // "{"
+            } else if (c == '}') {
+                column = 9; // "}"
+            } else if (c == '(') {
+                column = 10; // "("
+            } else if (c == ')') {
+                column = 11; // ")"
+            } else if (c == ',') {
+                column = 12; // ","
+            } else if (c == ';') {
+                column = 13; // ";"
+            } else if (c == '+') {
+                column = 14; // "+"
+            } else if (c == '-') {
+                column = 15; // "-"
+            } else if (c == '>') {
+                column = 16; // ">"
             } else {
-                if (currentToken.length() > 0) {
-                    tokens.add(currentToken.toString());
-                    currentToken = new StringBuilder();
-                }
-                // Check if the character is a punctuation
-                if (isPunctuation(c)) {
-                    tokens.add(String.valueOf(c));
-                }
-                currentState = 0; // Reset state
+                column = 7; // Other
             }
+            
+            
+            currentState = stateTable[currentState][column]; // Transition to next state
+            System.out.println("TOKEN: " + token + " state = " + currentState);
         }
-
-        // Add the last token if it's not empty
-        if (currentToken.length() > 0) {
-            tokens.add(currentToken.toString());
-            System.out.println("Token Added: " + currentToken);
-        }
-
-        return tokens;
-    }
-
-
-    private boolean isPunctuation(char c) {
-        return c == '{' || c == '}' || c == '(' || c == ')' || c == ',' || c == ';' || c == '+' || c == '-' || c == '*' || c == '/';
-    }
-    
-    private int getInputIndex(char c) {
-        if (Character.isLetter(c)) {
-            return 0; // Letter
-        } else if (Character.isDigit(c)) {
-            return 1; // Digit
-        } else if (c == '*') {
-            return 2; // Asterisk
-        } else if (c == '/') {
-            return 3; // Slash
-        } else if (c == '=') {
-            return 4; // Equals
-        } else if (c == '<') {
-            return 5; // Less than
-        } else if (Character.isWhitespace(c)) {
-            return 6; // Whitespace
-        } else if (c == '{') {
-            return 8; // Left curly brace
-        } else if (c == '}') {
-            return 9; // Right curly brace
-        } else if (c == '(') {
-            return 10; // Left parenthesis
-        } else if (c == ')') {
-            return 11; // Right parenthesis
-        } else if (c == ',') {
-            return 12; // Comma
-        } else if (c == ';') {
-            return 13; // Semicolon
-        } else if (c == '+') {
-            return 14; // Plus
-        } else if (c == '-') {
-            return 15; // Minus
-        } else if (c == '>') {
-            return 16; // Greater than
-        } else {
-            return 7; // Other
-        }
-    }
-    
-    public String classifyToken(String token, List<String> tokens) {
-
-    	if (classifiedIdentifiers.containsKey(token)) {
-            // If yes, return its existing classification
-            return classifiedIdentifiers.get(token);
-        }
-    	
-    	if (token.matches("[a-zA-Z][a-zA-Z0-9_]*")){
-    		if(token.toLowerCase().matches("class")) {
-    			classifiedIdentifiers.put(token, "$Class");
-    			return "$Class";
-    		}
-    		int index = tokens.indexOf(token); // Get the index of the current token
-    		
-            if (index > 0 && tokens.get(index - 1).toLowerCase().equals("class")) {
-            	classifiedIdentifiers.put(token, "$program name");
-                return "$Program Name"; 
-            } else if(index < tokens.size() - 2 && tokens.get(index + 1).equals("=") && isInteger(tokens.get(index + 2))){
-            	classifiedIdentifiers.put(token, "ConstVar");
-            	symbolValue.put(token, tokens.get(index + 2));
-            	return "ConstVar";// Return the classification for ConstVar
-            } else if (index > 0){
-            	classifiedIdentifiers.put(token, "Var");
-                return "Var"; // Return the classification for VAR
-            }
-    	}
-    	if(token.matches("[0-9]*")) {
-    		classifiedIdentifiers.put(token, "NumLit");
-    		return "NumLit";
-    		
-    	}
-    	
-    	switch (token.toLowerCase()) {
-            case "const":
-                return "$Const"; // Return the classification for CONST
-            case "var":
-            	return "$Var";
-            case "{":
-            	return "$LB"; 
-            case "}":
-                return "$RB"; // Return the classification for brackets
-            case "(":
-            	return "$LP";
-            case ")":
-                return "$RP"; // Return the classification for parenthesis
-            case ",":
-                return "$Comma"; // Return the classification for comma
-            case ";":
-                return "$Semicolon";
-            case "*":
-            case "/":
-                return "$mop"; // Return the classification for multiplication and division operators
-            case "+":
-            case "-":
-                return "$addop"; // Return the classification for addition and subtraction operators
-            case "==":
-            case ">=":
-            case "<=":
-            case "!=":
-            case ">":
-            case "<":
-                return "$relop"; // Return the classification for relational operators
-            case "=":
-                return "$="; // Return the classification for assignment operator
+        // Determine the classification based on the final state
+        switch (currentState) {
+        
+        	case 10:	//mop state
+            case 2:
+                return "<mop>";
+            case 4:  // Integer state
+                return "<integer>";
+            case 6:  // Variable state
+        		switch(token) {
+        			case "CLASS ":
+        				return "$CLASS";
+        			case "IF ":
+        				return "$IF";
+        			case "CONST ":
+        				return "$CONST";
+        			case "VAR ":
+        				return "$VAR";
+        			case "ELSE ":
+        				return "$ELSE";
+        			case "CALL ":
+        				return "$CALL";
+        			case "WHILE ":
+        				return "$WHILE";
+        			case "DO ":
+        				return "$DO";
+        			case "PROCEDURE ":
+        				return "$PROCEDURE";
+    				default:
+    	                return "<var>";
+        		}
+            	
+            case 12: // Assignment state
+                return "<assign>";
+            case 13: 
+            	System.out.println(token);
+            case 15: // Relational operator state
+            case 16: 
+            case 26:
+            case 27:
+                return "<relop>";
+            case 17:
+                return "$LB";
+            case 18: 
+                return "$RB";
+            case 19: 
+                return "$LP";
+            case 20: 
+                return "$RP";
+            case 21: 
+                return "<comma>";
+            case 22: // Semicolon state
+                return "<semi>";
+            case 23: // Additive operator state
+            case 24: // Additive operator state
+                return "<addop>";
             default:
-                return "Unknown";
+                return "Other"; // Default classification for unrecognized tokens
         }
     }
 
-    private boolean isInteger(String str) {
-        try {
-            Integer.parseInt(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
+    private void writeTokensFile(String inputFile, String outputFile) {
+        try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
+             BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // Process each line using the lexical analyzer
+                List<String> tokens = processTokens(line);
+                // Output the tokens for this line to the file
+                for (String token : tokens) {
+                    // Classify the token
+                    String classification = classifyToken(token);   
+                    // Write the token and its classification to the output file
+                    bw.write(token + "\t" + classification);                       
+                    //bw.write(token);
+                	bw.newLine();
+                }
+            }
+            System.out.println("Tokens with classifications written to " + outputFile);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
-    
-    private void writeTokensFile(String inputFile, String outputFile) {
-    	try (	BufferedReader br = new BufferedReader(new FileReader(inputFile));
-    			BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
-    		String line;
-    		while ((line = br.readLine()) != null) {
-    			// Process each line using the lexical analyzer
-    			List<String> tokens = processTokens(line);
-    			// Output the tokens for this line to the file
-    			for (String token : tokens) {
-    				// Classify the token
-    				String classification = classifyToken(token, tokens);   
-                       // Write the token and its classification to the output file                       
-    				bw.write(token + "\t" + classification);                       
-    				bw.newLine();
-    				}
-    			}
-    		System.out.println("Tokens with classifications written to " + outputFile);
-    		} 
-    	catch (IOException e) {
-    		e.printStackTrace();
-    	}
-    	
-    }
+
 
     public static void main(String[] args) {
     	
@@ -462,102 +410,6 @@ public class LexicalAnalyzer {
 
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
         analyzer.writeTokensFile(inputFilename, tokensFile);
-        analyzer.writeSymbolTable(tokensFile, symbolTable);
         
     }
-    
-    public void writeSymbolTable(String tokensFile, String outputFile) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
-            // Define column widths
-            int symbolWidth = 10;
-            int classificationWidth = 15;
-            int valueWidth = 10;
-            int addressWidth = 10;
-            int segmentWidth = 10;
-
-            // Write header with padding
-            bw.write(String.format("%-" + symbolWidth + "s", "Symbol"));
-            bw.write(String.format("%-" + classificationWidth + "s", "Classification"));
-            bw.write(String.format("%-" + valueWidth + "s", "Value"));
-            bw.write(String.format("%-" + addressWidth + "s", "Address"));
-            bw.write(String.format("%-" + segmentWidth + "s", "Segment"));
-            bw.newLine();
-
-            // Set to store symbols already added to the table
-            Set<String> addedSymbols = new HashSet<>();
-
-            List<String> tokens = new ArrayList<>();
-            try (BufferedReader br = new BufferedReader(new FileReader(tokensFile))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    tokens.add(line.trim());
-                }
-            }
-
-            String segment = "$DS"; // Start with Data Segment
-
-            for (String token : tokens) {
-                // Split the token into symbol and classification parts
-                String[] parts = token.split("\t");
-                if (parts.length != 2) {
-                    System.out.println("Invalid token format: " + token);
-                    continue; // Skip invalid tokens
-                }
-                String symbol = parts[0];
-                String classification = parts[1];
-
-                // Find value for symbol
-                String value = "?"; // Initialize value as unknown by default
-                if (classification.equals("ConstVar")) {
-                    value = symbolValue.getOrDefault(symbol, "?");
-                    assignedValues.add(value);
-                } else if (classification.equals("NumLit")) {
-                    // Check if the value corresponds to a symbol that has already been assigned
-                    if (assignedValues.contains(symbol)) {
-                        continue; // Skip treating it as a NumLit
-                    }
-                    // If not, update the assigned values set for NumLit
-                    assignedValues.add(symbol);
-                    value = symbol; // Value is the token itself
-                }
-
-                // Find address for symbol
-                String address;
-                if (classification.equals("$Program Name")) {
-                    address = String.valueOf(codeAddress);
-                    codeAddress += 2;
-                    value = ""; // Clear value for program name
-                    segment = "$CS"; // Switch to Code Segment for program name
-                } else if (!classification.startsWith("$")) {
-                    address = String.valueOf(dataAddress);
-                    dataAddress += 2; // Increment data address by 2
-                    segment = "$DS";
-                } else {
-                    address = "?"; // For other segments, address is unknown
-                }
-
-                // Add the symbol to the symbol table only if it's not already added
-                if (!addedSymbols.contains(symbol)) {
-                    // Write into symbol table
-                	if (!classification.startsWith("$") || classification.equals("$Program Name")) {
-	                    bw.write(String.format("%-" + symbolWidth + "s", symbol));
-	                    bw.write(String.format("%-" + classificationWidth + "s", classification));
-	                    bw.write(String.format("%-" + valueWidth + "s", value));
-	                    bw.write(String.format("%-" + addressWidth + "s", address));
-	                    bw.write(String.format("%-" + segmentWidth + "s", segment));
-	                    bw.newLine();
-                	}
-
-                    // Add the symbol to the set of added symbols
-                    addedSymbols.add(symbol);
-                }
-            }
-
-            System.out.println("Symbol table written to " + outputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-
 }
