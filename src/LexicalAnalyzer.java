@@ -1,282 +1,236 @@
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 public class LexicalAnalyzer {
-    private int stateTable[][];
-    private Map<String, String> classifiedIdentifiers;
-    private Map<String, String> symbolValue;
-    private Set<String> assignedValues;
-    private Set<String> addedSymbols;
-    private int dataAddress;
-    private int codeAddress;
+    private static final int[][] STATE_TABLE = new int[30][18];
+    private Map<String, Integer> tokenStateMap = new HashMap<>();
+    private Map<String, String> classifiedTokens = new HashMap<>();
 
-    public LexicalAnalyzer() {
-    	classifiedIdentifiers = new HashMap<>();
-    	symbolValue = new HashMap<>();
-    	addedSymbols = new HashSet<>();
-    	assignedValues = new HashSet<>();
-        dataAddress = 0;
-        codeAddress = 0;
-        
-        // Initialize the state transition table
-        stateTable = new int[28][17];
 
-        // Row 0: Transition from state 0
-        stateTable[0][0] = 5;  // Letter
-        stateTable[0][1] = 3;  // Digit
-        stateTable[0][2] = 2;  // "*"
-        stateTable[0][3] = 7;  // "/"
-        stateTable[0][4] = 11; // "="
-        stateTable[0][5] = 14; // "<"
-        stateTable[0][6] = 0;  // Whitespace
-        stateTable[0][7] = 1;  // Other
-        stateTable[0][8] = 17; // "{"
-        stateTable[0][9] = 18; // "}"
-        stateTable[0][10] = 19; // "("
-        stateTable[0][11] = 20; // ")"
-        stateTable[0][12] = 21; // ","
-        stateTable[0][13] = 22; // ";"
-        stateTable[0][14] = 23; // "+"
-        stateTable[0][15] = 24; // "-"
-        stateTable[0][16] = 25; // ">"
+    static {
+        initializeStateTable();
+    }
+
+    private static void initializeStateTable() {
+    	// Row 0: Transition from state 0
+        STATE_TABLE[0][0] = 5;  // Letter
+        STATE_TABLE[0][1] = 3;  // Digit
+        STATE_TABLE[0][2] = 2;  // "*"
+        STATE_TABLE[0][3] = 7;  // "/"
+        STATE_TABLE[0][4] = 11; // "="
+        STATE_TABLE[0][5] = 14; // "<"
+        STATE_TABLE[0][6] = 0;  // Whitespace
+        STATE_TABLE[0][7] = 1;  // Other
+        STATE_TABLE[0][8] = 17; // "{"
+        STATE_TABLE[0][9] = 18; // "}"
+        STATE_TABLE[0][10] = 19; // "("
+        STATE_TABLE[0][11] = 20; // ")"
+        STATE_TABLE[0][12] = 21; // ","
+        STATE_TABLE[0][13] = 22; // ";"
+        STATE_TABLE[0][14] = 23; // "+"
+        STATE_TABLE[0][15] = 24; // "-"
+        STATE_TABLE[0][16] = 25; // ">"
+        STATE_TABLE[0][17] = 28; // "!"
 
         // Rows 1: Error state
-        for (int col = 0; col < 17; col++) {
-            stateTable[1][col] = 1; // Stay in error state for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[1][col] = 1; // Stay in error state for all inputs
         }
 
         // Row 2: $mop "*"
-        for (int col = 0; col < 17; col++) {
-            stateTable[2][col] = 2; // Stay in $mop state for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[2][col] = 2; // Stay in $mop state for all inputs
         }
 
         // Row 3: Transition for Digits
-        for (int col = 0; col < 17; col++) {
+        for (int col = 0; col < 18; col++) {
             if (col == 1) {
-                stateTable[3][col] = 3;
-            } else if (col == 7){
-            	stateTable[3][col] = 1;
+                STATE_TABLE[3][col] = 3;
             } else {
-                stateTable[3][col] = 4; 
+                STATE_TABLE[3][col] = 4; 
             }
         }
 
         // Row 4: Integer state
-        for (int col = 0; col < 17; col++) {
-            stateTable[4][col] = 4; // Integer state remains in itself for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[4][col] = 4; // Integer state remains in itself for all inputs
         }
 
 
 
         // Rows 5 Variable state transition
-        for(int col = 0; col < 17; col++) {
-        	if(col == 0 || col == 1) {
-        		stateTable[5][col] = 5;
-        	} else if(col == 7) {
-        		stateTable[5][col] = 1;
-        	} else {
-        		stateTable[5][col] = 6;
+        for(int col = 0; col < 18; col++) {
+        	if(col == 0 || col == 1 ) {
+        		STATE_TABLE[5][col] = 5;
+        	}else {
+        		STATE_TABLE[5][col] = 6;
         	}
         }
 
         // Row 6: Variable state
-        for(int col = 0; col < 17; col++) {
-        	stateTable[6][col] = 6;
+        for(int col = 0; col < 18; col++) {
+        	STATE_TABLE[6][col] = 6;
         	
         }
         
         // Row 7: Transition for "/"
-        for(int col = 0; col < 17; col ++) {
-        	if(col == 2) {
-        		stateTable[7][col] = 8;
-        	} else if (col == 7) {
-        		stateTable[7][col] = 1;
+        for(int col = 0; col < 18; col ++) {
+        	if(col == 2) {	// c is a *
+        		STATE_TABLE[7][col] = 8;
         	} else {
-        		stateTable[7][col] = 10;
+        		STATE_TABLE[7][col] = 10;
         	}
         }
         
         // Row 8: elimnitate comments /* o o o */
-        for(int col = 0; col < 17; col ++) {
+        for(int col = 0; col < 18; col ++) {
         	if(col == 2) {
-        		stateTable[8][col] = 9;
-        	} else if (col == 7) {
-        		stateTable[8][col] = 1;
+        		STATE_TABLE[8][col] = 9;	// goes to state 9 for '*'
         	} else {
-        		stateTable[8][col] = 8;
+        		STATE_TABLE[8][col] = 8; 	// stay in 8 for all other inputs
         	}
         }
         
         // Row 9: read comment
-        for (int col = 0; col < 17; col++) {
+        for (int col = 0; col < 18; col++) {
             if (col == 3) {
-                stateTable[9][col] = 0; // Transition to state 0 on "/" input
-            } else if(col == 7) {
-            	stateTable[9][col] = 1;
+                STATE_TABLE[9][col] = 9; // Transition to state 0 on "/" input and finish comment
             } else {
-                stateTable[9][col] = 8; // Transition to state 8 for all other inputs
+                STATE_TABLE[9][col] = 8; // Transition to state 8 for all other inputs
             }
         }
         
         // Row 10: Transition for "/" operator
-        for (int col = 0; col < 17; col++) {
-            stateTable[10][col] = 10; // Stay in state 10 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[10][col] = 10; // Stay in state 10 for all inputs
         }
         
         // Row 11: Transition for state 11
-        for(int col = 0; col < 17; col++) {
-        	if(col == 4) {
-                stateTable[11][col] = 13;  // "="
-        	} else if(col == 7) {
-        		stateTable[11][col] = 1;  // Other
-        	} else {
-        		stateTable[11][col] = 12;
-        	}
+        for(int col = 0; col < 18; col++) {
+            if(col == 4) {
+                STATE_TABLE[11][col] = 13;  // encounters another assignment operator, goes to relop
+            } else if (col == 7) {
+                STATE_TABLE[11][col] = 1; // Error state
+            } else {
+                STATE_TABLE[11][col] = 12; // Transition to state 12 for all other inputs
+            }
         }
+
         
         // Row 12: "=" $assignment
-        for (int col = 0; col < 17; col++) {
-            stateTable[12][col] = 12; // Stay in state 12 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[12][col] = 12;
         }
         // Row 13: "==" $relop
-        for (int col = 0; col < 17; col++) {
-            stateTable[13][col] = 13; // Stay in state 13 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[13][col] = 13; // Stay in state 13 for all inputs
         }
         
         // Row 14: Transition for state 14
-        for (int col = 0; col < 17; col++) {
+        for (int col = 0; col < 18; col++) {
             if (col == 4) {
-                stateTable[14][col] = 16; // Transition to state 16 on "<" input
+                STATE_TABLE[14][col] = 16; // Transition to state 16 on "<" input
             } else {
-                stateTable[14][col] = 15; // Transition to state 15 for all other inputs
+                STATE_TABLE[14][col] = 15; // Transition to state 15 for all other inputs
             }
         }
         
         // Row 15: "<" $relop
-        for (int col = 0; col < 17; col++) {
-            stateTable[15][col] = 15; // Stay in state 15 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[15][col] = 15; // Stay in state 15 for all inputs
         }
 
         // Row 16: "<=" $relop
-        for (int col = 0; col < 17; col++) {
-            stateTable[16][col] = 16; // Stay in state 16 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[16][col] = 16; // Stay in state 16 for all inputs
         }
 
         // Row 17: "{" $LB
-        for (int col = 0; col < 17; col++) {
-            stateTable[17][col] = 17; // Stay in state 17 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[17][col] = 17; // Stay in state 17 for all inputs
         }
 
         // Row 18: "}" $RB
-        for (int col = 0; col < 17; col++) {
-            stateTable[18][col] = 18; // Stay in state 18 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[18][col] = 18; // Stay in state 18 for all inputs
         }
 
         // Row 19: "(" $LP
-        for (int col = 0; col < 17; col++) {
-            stateTable[19][col] = 19; // Stay in state 19 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[19][col] = 19; // Stay in state 19 for all inputs
         }
 
         // Row 20: ")" $RP
-        for (int col = 0; col < 17; col++) {
-            stateTable[20][col] = 20; // Stay in state 20 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[20][col] = 20; // Stay in state 20 for all inputs
         }
         
         // Row 21: "," $comma
-        for (int col = 0; col < 17; col++) {
-        	stateTable[21][col] = 21;
+        for (int col = 0; col < 18; col++) {
+        	STATE_TABLE[21][col] = 21;
         }
 
         // Row 22: ";" $semicolon
-        for (int col = 0; col < 17; col++) {
-        	stateTable[22][col] = 22;
+        for (int col = 0; col < 18; col++) {
+        	STATE_TABLE[22][col] = 22;
         }
 
 
         // Row 23: "+" $addop
-        for (int col = 0; col < 17; col++) {
-            stateTable[23][col] = 23; // Stay in state 23 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[23][col] = 23; // Stay in state 23 for all inputs
         }
 
         // Row 24: "-" $addop
-        for (int col = 0; col < 17; col++) {
-            stateTable[24][col] = 24; // Stay in state 24 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[24][col] = 24; // Stay in state 24 for all inputs
         }
         // Row 25 transition
-        for (int col = 0; col < 17; col++) {
+        for (int col = 0; col < 18; col++) {
             if (col == 4) {
-                stateTable[25][col] = 27; // Transition to state 27 on "=" input
+                STATE_TABLE[25][col] = 27; // Transition to state 27 on "=" input
             } else {
-                stateTable[25][col] = 26; // Transition to state 26 for all other inputs
+                STATE_TABLE[25][col] = 26; // Transition to state 26 for all other inputs
             }
         }
         
         // Row 26: ">" $relop
-        for (int col = 0; col < 17; col++) {
-            stateTable[26][col] = 26; // Stay in state 26 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[26][col] = 26; // Stay in state 26 for all inputs
         }
 
         // Row 27: ">=" $relop
-        for (int col = 0; col < 17; col++) {
-            stateTable[27][col] = 27; // Stay in state 27 for all inputs
+        for (int col = 0; col < 18; col++) {
+            STATE_TABLE[27][col] = 27; // Stay in state 27 for all inputs
         }
         
-    }
-    
-    private boolean isDelimeter(char c) {
-        String punctuationAndOperators = ",;";
-        return punctuationAndOperators.indexOf(c) != -1;
-    }
-
-    private List<String> processTokens(String line) {
-        List<String> tokenList = new ArrayList<>();
-        int strNdx = 0;
-        int strLen = line.length();
-        while (strNdx < strLen) {
-            StringBuilder tokenBuilder = new StringBuilder();
-            // Skip leading blanks
-            while (strNdx < strLen && (line.charAt(strNdx) == ' ' || line.charAt(strNdx) == '\t' || line.charAt(strNdx) == '\n')) {
-                strNdx++;
-            }
-            // Build token delimited by a space or end of string or punctuation
-            while (strNdx < strLen && line.charAt(strNdx) != ' ' && !isDelimeter(line.charAt(strNdx))) {
-                tokenBuilder.append(line.charAt(strNdx));
-                strNdx++;
-            }
-            // Add token to the list
-            if (tokenBuilder.length() > 0) {
-            	tokenBuilder.append(' ');
-                tokenList.add(tokenBuilder.toString());
-            }
-            // Check if the current character is a punctuation or operator
-            if (strNdx < strLen && isDelimeter(line.charAt(strNdx))) {
-            	tokenBuilder.append(' ');
-                tokenList.add(Character.toString(line.charAt(strNdx)));
-                strNdx++;
-            }
+        // row 28 "!"
+        for (int col = 0; col < 18; col ++) {
+        	if(col == 4) {
+        		STATE_TABLE[28][col] = 29;
+        	} else {
+        		STATE_TABLE[28][col] = 1;
+        	}
         }
-        return tokenList;
+
+        // row 29 "!=" <relop>
+        for (int col = 0; col < 18; col ++) {
+        	
+    		STATE_TABLE[29][col] = 29;
+        	
+        }
     }
 
-    
- 
-    
-    private String classifyToken(String token) {
-    	
-    	
-    	
-        int currentState = 0; // Start at state 0
-        for (char c : token.toCharArray()) {
+
+    private List<String> tokenize(String line) {
+    	List<String> tokens = new ArrayList<>();
+        StringBuilder currentToken = new StringBuilder();
+        int currentState = 0, nextState = 0;
+        
+        
+        for (char c : line.toCharArray()) {
             int column;
+
             if (Character.isLetter(c)) {
                 column = 0; // Letter
             } else if (Character.isDigit(c)) {
@@ -309,91 +263,148 @@ public class LexicalAnalyzer {
                 column = 15; // "-"
             } else if (c == '>') {
                 column = 16; // ">"
+            } else if(c == '!'){
+            	column = 17;
             } else {
                 column = 7; // Other
             }
+            currentState = nextState;
+            nextState = STATE_TABLE[currentState][column]; // Transition to next state
+            //System.out.println(currentToken + " [" + currentState + "][" + column + "] = " + nextState);
             
             
-            currentState = stateTable[currentState][column]; // Transition to next state
-            System.out.println("TOKEN: " + token + " state = " + currentState);
+        	// If the column is whitespace and not transitioning to an error state
+            if (column == 6 && currentState != 1 && nextState != 1) {
+                if (currentState != 8 && currentState != 9) {
+	            	if (currentToken.length() > 0) {
+	                    tokens.add(currentToken.toString());
+	                	System.out.println(currentToken + " Current State:  " + currentState + " Next State:  " + nextState );
+	                    tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+	                    currentToken.setLength(0);
+	                    currentState = 0;
+	                    nextState = 0;
+	                }
+                }
+            } else if (column == 12 || column == 13 || column == 8 || column == 9) {
+                if (currentToken.length() > 0) {
+                    tokens.add(currentToken.toString());
+                	//System.out.println(currentToken + " Current State:  " + currentState + " Next State:  " + nextState );
+                    tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+                    currentToken.setLength(0);
+                    currentState = 0;
+                    nextState = 0;
+                }
+                // add commas and semicolons
+                nextState = STATE_TABLE[currentState][column]; // Transition to next state
+                tokenStateMap.put(String.valueOf(c), nextState); // Map token to currentState
+                tokens.add(String.valueOf(c)); // Add comma or semicolon as a separate token
+                currentState = 0;
+                nextState = 0;
+            } else {
+                currentToken.append(c);
+            }
         }
-        // Determine the classification based on the final state
-        switch (currentState) {
+
+        // Check if there's a token remaining in the buffer
+        if (currentToken.length() > 0 && (currentState != 8 && currentState != 9)) {
+            tokens.add(currentToken.toString());
+            tokenStateMap.put(currentToken.toString(), nextState);
+        }
         
-        	case 10:	//mop state
+
+        return tokens;
+    }
+
+    private String classifyToken(String token) {
+        Integer currentState = tokenStateMap.get(token);
+        if (currentState == null) {
+            return "Other"; // Default classification for unrecognized tokens
+        }
+
+        switch (currentState) {
             case 2:
                 return "<mop>";
-            case 4:  // Integer state
+            case 10:
+                return "<mop>";
+            case 3:
+            case 4:
                 return "<integer>";
-            case 6:  // Variable state
-        		switch(token) {
-        			case "CLASS ":
-        				return "$CLASS";
-        			case "IF ":
-        				return "$IF";
-        			case "CONST ":
-        				return "$CONST";
-        			case "VAR ":
-        				return "$VAR";
-        			case "ELSE ":
-        				return "$ELSE";
-        			case "CALL ":
-        				return "$CALL";
-        			case "WHILE ":
-        				return "$WHILE";
-        			case "DO ":
-        				return "$DO";
-        			case "PROCEDURE ":
-        				return "$PROCEDURE";
-    				default:
-    	                return "<var>";
-        		}
-            	
-            case 12: // Assignment state
+            
+            case 6:
+                switch (token) {
+                    case "CLASS":
+                        return "$CLASS";
+                    case "IF":
+                        return "$IF";
+                    case "CONST":
+                        return "$CONST";
+                    case "VAR":
+                        return "$VAR";
+                    case "ELSE":
+                        return "$ELSE";
+                    case "CALL":
+                        return "$CALL";
+                    case "WHILE":
+                        return "$WHILE";
+                    case "DO":
+                        return "$DO";
+                    case "PROCEDURE":
+                        return "$PROCEDURE";
+                    default:
+                        return "<var>";
+                }
+            case 12:
                 return "<assign>";
-            case 13: 
-            	System.out.println(token);
-            case 15: // Relational operator state
-            case 16: 
+            case 13:
+            case 15:
+            case 16:
             case 26:
             case 27:
+            case 29:
                 return "<relop>";
             case 17:
                 return "$LB";
-            case 18: 
+            case 18:
                 return "$RB";
-            case 19: 
+            case 19:
                 return "$LP";
-            case 20: 
+            case 20:
                 return "$RP";
-            case 21: 
+            case 21:
                 return "<comma>";
-            case 22: // Semicolon state
+            case 22:
                 return "<semi>";
-            case 23: // Additive operator state
-            case 24: // Additive operator state
+            case 23:
+            case 24:
                 return "<addop>";
             default:
                 return "Other"; // Default classification for unrecognized tokens
         }
     }
 
-    private void writeTokensFile(String inputFile, String outputFile) {
+    private void processLine(String line, BufferedWriter bw) throws IOException {
+        List<String> tokens = tokenize(line);
+        for (String token : tokens) {
+            String classification;
+            // Check if the token has already been classified
+            if (classifiedTokens.containsKey(token)) {
+                classification = classifiedTokens.get(token);
+            } else {
+                // Classify the token and store its classification
+                classification = classifyToken(token);
+                classifiedTokens.put(token, classification);
+            }
+            bw.write(token + "\t" + classification);
+            bw.newLine();
+        }
+    }
+
+    public void analyze(String inputFile, String outputFile) {
         try (BufferedReader br = new BufferedReader(new FileReader(inputFile));
              BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                // Process each line using the lexical analyzer
-                List<String> tokens = processTokens(line);
-                // Output the tokens for this line to the file
-                for (String token : tokens) {
-                    // Classify the token
-                    String classification = classifyToken(token);   
-                    // Write the token and its classification to the output file
-                    bw.write(token + "\t" + classification);                       
-                    //bw.write(token);
-                	bw.newLine();
-                }
+                processLine(line, bw);
             }
             System.out.println("Tokens with classifications written to " + outputFile);
         } catch (IOException e) {
@@ -401,15 +412,11 @@ public class LexicalAnalyzer {
         }
     }
 
-
     public static void main(String[] args) {
-    	
-    	String inputFilename = "input.txt";
+        String inputFilename = "input.txt";
         String tokensFile = "tokens.txt";
-        String symbolTable = "symbolTable.txt";
 
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
-        analyzer.writeTokensFile(inputFilename, tokensFile);
-        
+        analyzer.analyze(inputFilename, tokensFile);
     }
 }
