@@ -270,16 +270,13 @@ public class LexicalAnalyzer {
             }
             currentState = nextState;
             nextState = STATE_TABLE[currentState][column]; // Transition to next state
-            //System.out.println(currentToken + " [" + currentState + "][" + column + "] = " + nextState);
-            
-            
+
         	// If the column is whitespace and not transitioning to an error state
             if (column == 6 && currentState != 1 && nextState != 1) {
                 if (currentState != 8 && currentState != 9) {
 	            	if (currentToken.length() > 0) {
 	                    tokens.add(currentToken.toString());
-	                	System.out.println(currentToken + " Current State:  " + currentState + " Next State:  " + nextState );
-	                    tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+	                	tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
 	                    currentToken.setLength(0);
 	                    currentState = 0;
 	                    nextState = 0;
@@ -288,8 +285,7 @@ public class LexicalAnalyzer {
             } else if (column == 12 || column == 13 || column == 8 || column == 9) {
                 if (currentToken.length() > 0) {
                     tokens.add(currentToken.toString());
-                	//System.out.println(currentToken + " Current State:  " + currentState + " Next State:  " + nextState );
-                    tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+                	tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
                     currentToken.setLength(0);
                     currentState = 0;
                     nextState = 0;
@@ -412,6 +408,7 @@ public class LexicalAnalyzer {
         }
     }
 
+    
     public static void main(String[] args) {
         String inputFilename = "input.txt";
         String tokensFile = "tokens.txt";
