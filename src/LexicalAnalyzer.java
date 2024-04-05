@@ -346,6 +346,8 @@ public class LexicalAnalyzer {
                         return "$DO";
                     case "PROCEDURE":
                         return "$PROCEDURE";
+                    case "ODD":
+                    	return "$ODD";
                     default:
                         return "<var>";
                 }
@@ -410,7 +412,7 @@ public class LexicalAnalyzer {
 
     
     public static void main(String[] args) {
-        String inputFilename = "input.txt";
+        String inputFilename = "input_main.txt";
         String tokensFile = "tokens.txt";
 
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
