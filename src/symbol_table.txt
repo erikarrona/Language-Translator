@@ -1,0 +1,14 @@
+SYMBOL     CLASSIFICATION  VALUE      ADDRESS    SEGMENT   
+Pgm1       $program name              0          CS        
+M          ConstVar        13         0          DS        
+N          ConstVar        56         2          DS        
+L          ConstVar        7          4          DS        
+X          Variable        ?          6          DS        
+Y          Variable        ?          8          DS        
+Z          Variable        ?          10         DS        
+97         NumLit          97         12         DS        
+18         NumLit          18         14         DS        
+3          NumLit          3          16         DS        
+Temp1      Var(Int)                   18         DS        
+Temp2      Var(Int)                   20         DS        
+Temp3      Var(Int)                   22         DS        

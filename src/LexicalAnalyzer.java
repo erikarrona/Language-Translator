@@ -5,7 +5,7 @@ public class LexicalAnalyzer {
     private static final int[][] STATE_TABLE = new int[30][18];
     private Map<String, Integer> tokenStateMap = new HashMap<>();
     private Map<String, String> classifiedTokens = new HashMap<>();
-    private static int symbolTableIndex = 0, codeAddress = 0, dataAddress = 0;
+    private static int codeAddress = 0, dataAddress = 0;
 
     static {
         initializeStateTable();
@@ -221,70 +221,71 @@ public class LexicalAnalyzer {
         }
     }
 
+    private int getColumn(char c) {
+        if (Character.isLetter(c)) {
+            return 0; // Letter
+        } else if (Character.isDigit(c)) {
+            return 1; // Digit
+        } else if (c == '*') {
+            return 2; // "*"
+        } else if (c == '/') {
+            return 3; // "/"
+        } else if (c == '=') {
+            return 4; // "="
+        } else if (c == '<') {
+            return 5; // "<"
+        } else if (Character.isWhitespace(c)) {
+            return 6; // Whitespace
+        } else if (c == '{') {
+            return 8; // "{"
+        } else if (c == '}') {
+            return 9; // "}"
+        } else if (c == '(') {
+            return 10; // "("
+        } else if (c == ')') {
+            return 11; // ")"
+        } else if (c == ',') {
+            return 12; // ","
+        } else if (c == ';') {
+            return 13; // ";"
+        } else if (c == '+') {
+            return 14; // "+"
+        } else if (c == '-') {
+            return 15; // "-"
+        } else if (c == '>') {
+            return 16; // ">"
+        } else if (c == '!') {
+            return 17; // "!"
+        } else {
+            return 7; // Other
+        }
+    }
+
     private List<String> tokenize(String line) {
-    	List<String> tokens = new ArrayList<>();
+        List<String> tokens = new ArrayList<>();
         StringBuilder currentToken = new StringBuilder();
         int currentState = 0, nextState = 0;
-        
-        
-        for (char c : line.toCharArray()) {
-            int column;
 
-            if (Character.isLetter(c)) {
-                column = 0; // Letter
-            } else if (Character.isDigit(c)) {
-                column = 1; // Digit
-            } else if (c == '*') {
-                column = 2; // "*"
-            } else if (c == '/') {
-                column = 3; // "/"
-            } else if (c == '=') {
-                column = 4; // "="
-            } else if (c == '<') {
-                column = 5; // "<"
-            } else if (Character.isWhitespace(c)) {
-                column = 6; // Whitespace
-            } else if (c == '{') {
-                column = 8; // "{"
-            } else if (c == '}') {
-                column = 9; // "}"
-            } else if (c == '(') {
-                column = 10; // "("
-            } else if (c == ')') {
-                column = 11; // ")"
-            } else if (c == ',') {
-                column = 12; // ","
-            } else if (c == ';') {
-                column = 13; // ";"
-            } else if (c == '+') {
-                column = 14; // "+"
-            } else if (c == '-') {
-                column = 15; // "-"
-            } else if (c == '>') {
-                column = 16; // ">"
-            } else if(c == '!'){
-            	column = 17;
-            } else {
-                column = 7; // Other
-            }
+        for (char c : line.toCharArray()) {
+            int column = getColumn(c);
             currentState = nextState;
             nextState = STATE_TABLE[currentState][column]; // Transition to next state
 
-        	// If the column is whitespace and not transitioning to an error state
+            // If the column is whitespace and not transitioning to an error state
             if (column == 6 && currentState != 1 && nextState != 1) {
                 if (currentState != 8 && currentState != 9) {
-	            	if (currentToken.length() > 0) {
-	                    tokens.add(currentToken.toString());
-	                	tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
-	                    currentToken.setLength(0);
-	                    currentState = 0;
-	                    nextState = 0;
-	                }
+                    if (currentToken.length() > 0) {
+                        tokens.add(currentToken.toString());
+                        tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+                        currentToken.setLength(0);
+                        currentState = 0;
+                        nextState = 0;
+                    }
                 }
             } else if (column == 12 || column == 13 || column == 8 || column == 9) {
                 if (currentToken.length() > 0) {
                     tokens.add(currentToken.toString());
-                	tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
+                    tokenStateMap.put(currentToken.toString(), nextState); // Map token to currentState
                     currentToken.setLength(0);
                     currentState = 0;
                     nextState = 0;
@@ -305,10 +306,10 @@ public class LexicalAnalyzer {
             tokens.add(currentToken.toString());
             tokenStateMap.put(currentToken.toString(), nextState);
         }
-        
 
         return tokens;
     }
+
 
     private String classifyToken(String token) {
         Integer currentState = tokenStateMap.get(token);
@@ -533,7 +534,6 @@ public class LexicalAnalyzer {
     	}
     }
     
-
     private String getSymbolClassification(String token) {
 		switch(token) {
 			case "CONST":
@@ -552,8 +552,6 @@ public class LexicalAnalyzer {
         // Otherwise, return the next state
         return nextState;
     }
-
-    
 
     private static boolean isReserved(String classification) {
         switch (classification) {
@@ -602,13 +600,46 @@ public class LexicalAnalyzer {
         }
     }
     
+    public List<String> readTokens(String tokensFile) {
+        List<String> tokens = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(tokensFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // Assuming each token is on a separate line in the tokens file
+                tokens.add(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading tokens file: " + e.getMessage());
+        }
+        return tokens;
+    }
+    
     public static void main(String[] args) {
-        String inputFilename = "input.txt";
+        if (args.length != 1) {
+            System.out.println("Usage: java LexicalAnalyzer inputFilename");
+            return;
+        }
+
+        String inputFilename = args[0];
         String tokensFile = "tokens.txt";
         String symbolFile = "symbol_table.txt";
 
+        // Perform lexical analysis
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
         analyzer.analyze(inputFilename, tokensFile);
+        System.out.println("Tokens generated, outputted in " + tokensFile);
+
+        // Read tokens
+        List<String> tokens = analyzer.readTokens(tokensFile);
+
+        // Perform syntax analysis
+        SyntaxAnalyzer syntaxAnalyzer = new SyntaxAnalyzer(tokens);
+        syntaxAnalyzer.analyze();
+        System.out.println("Syntax analysis completed.");
+
+        // Analyze tokens
         analyzer.analyzeTokens(tokensFile, symbolFile);
+        System.out.println("Symbol Table analyzed, outputted in " + symbolFile);
     }
+
 }
