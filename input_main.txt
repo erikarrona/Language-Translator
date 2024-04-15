@@ -1,0 +1,19 @@
+CLASS LargestCommonDenominator{
+	CONST M = 7, N = 85;
+	VAR X, Y, Z, Q, R;
+	
+	PROCEDURE Multiply(){
+		VAR A, B;
+		
+		A = X; B = Y; Z = 0;
+		WHILE B > 0 DO {
+			IF ODD B THEN Z = Z + A;
+			A = 2 * A; B = B / 2;
+		}
+	}
+		
+
+	X = M; 
+	Y = N;
+	CALL Multiply();
+}

@@ -600,13 +600,17 @@ public class LexicalAnalyzer {
         }
     }
     
-    public List<String> readTokens(String tokensFile) {
+    private List<String> readTokens(String tokensFile) {
         List<String> tokens = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(tokensFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                // Assuming each token is on a separate line in the tokens file
-                tokens.add(line);
+                // Split each line by tab
+                String[] parts = line.split("\t", 2);
+                if (parts.length >= 1) {
+                    // Add only the token part to the tokens list
+                    tokens.add(parts[0]);
+                }
             }
         } catch (IOException e) {
             System.err.println("Error reading tokens file: " + e.getMessage());
@@ -620,13 +624,13 @@ public class LexicalAnalyzer {
             return;
         }
 
-        String inputFilename = args[0];
+        String inputFileName = args[0];
         String tokensFile = "tokens.txt";
         String symbolFile = "symbol_table.txt";
 
         // Perform lexical analysis
         LexicalAnalyzer analyzer = new LexicalAnalyzer();
-        analyzer.analyze(inputFilename, tokensFile);
+        analyzer.analyze(inputFileName, tokensFile);
         System.out.println("Tokens generated, outputted in " + tokensFile);
 
         // Read tokens
