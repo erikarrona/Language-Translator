@@ -1,10 +1,16 @@
-import java.util.List;
+import java.util.*;
 
 public class SyntaxAnalyzer {
     private List<String> tokens;
+    private Stack<String> operatorStack;
+    private Stack<String> operandStack;
+    private int tempCount;
 
     public SyntaxAnalyzer(List<String> tokens) {
         this.tokens = tokens;
+        this.operatorStack = new Stack<>();
+        this.operandStack = new Stack<>();
+        this.tempCount = 1;
     }
 
     public void analyze() {
@@ -18,32 +24,23 @@ public class SyntaxAnalyzer {
     }
 
     private void parseProgram() {
-    	System.out.println("START CLASS");
         expect("CLASS");
         expectIdent();
         expect("{");
         parseBlock();
         expect("}");
-    	System.out.println("END CLASS");
         expectEndOfFile();
     }
 
     private void parseBlock() {
-    	System.out.println("START BLOCK");
         while (!peek().equals("}")) {
             String token = peek();
             if (token.equals("CONST")) {
-            	System.out.println("START CONST");
                 parseConstDefPart();
-            	System.out.println("END CONST");
             } else if (token.equals("VAR")) {
-            	System.out.println("START VAR");
                 parseVariableDefPart();
-            	System.out.println("END VAR");
             } else if (token.equals("PROCEDURE")) {
-            	System.out.println("START PROC");
                 parseProcedureDefPart();
-            	System.out.println("END PROC");
             } else {
                 parseStmt();
                 if (peek().equals(";")) {
@@ -51,10 +48,7 @@ public class SyntaxAnalyzer {
                 }
             }
         }
-    	System.out.println("END BLOCK");
     }
-
-
 
     private void parseConstDefPart() {
         if (peek().equals("CONST")) {
@@ -112,7 +106,6 @@ public class SyntaxAnalyzer {
         while (!tokens.isEmpty()) {
             String token = tokens.get(0);
             if (token.equals("}")) {
-            	
                 break;
             } else if (isIdent(token)) {
                 parseSimpleStmt();
@@ -125,7 +118,7 @@ public class SyntaxAnalyzer {
             } else if (token.equals("WHILE")) {
                 parseWhileStmt();
             } else if (token.equals(";")) {
-                expect(";"); 
+                expect(";");
                 break;
             } else {
                 throw new RuntimeException("Unexpected token: " + token);
@@ -133,17 +126,17 @@ public class SyntaxAnalyzer {
         }
     }
 
-
     private void parseSimpleStmt() {
-    	expectIdent();
+        String identifier = getNextToken();
         expect("=");
         parseExp();
+        String result = operandStack.pop();
+        System.out.println("=, " + identifier + ", " + result + ", " + "N");
     }
 
     private void parseCallStmt() {
         expect("CALL");
         expectIdent();
-        
         if (peek().equals("{")) {
             parseBlock();
         }
@@ -158,7 +151,7 @@ public class SyntaxAnalyzer {
             }
         }
         if (!tokens.isEmpty()) {
-        	expect("}"); 
+            expect("}");
         }
     }
 
@@ -173,7 +166,7 @@ public class SyntaxAnalyzer {
         expect("WHILE");
         parseBE();
         expect("DO");
-        parseStmt(); 
+        parseStmt();
     }
 
     private void parseBE() {
@@ -190,24 +183,32 @@ public class SyntaxAnalyzer {
     private void parseExp() {
         parseTerm();
         while (isAddop(peek())) {
-            expectAddop();
+            String operator = getNextToken();
             parseTerm();
+            String operand2 = operandStack.pop();
+            String operand1 = operandStack.pop();
+            String temp = "T" + tempCount++;
+            operandStack.push(temp);
+            System.out.println(operator + ", " + operand1 + ", " + operand2 + ", " + temp);
         }
     }
 
     private void parseTerm() {
         parseFac();
         while (isMop(peek())) {
-            expectMop();
+            String operator = getNextToken();
             parseFac();
+            String operand2 = operandStack.pop();
+            String operand1 = operandStack.pop();
+            String temp = "T" + tempCount++;
+            operandStack.push(temp);
+            System.out.println(operator + ", " + operand1 + ", " + operand2 + ", " + temp);
         }
     }
 
     private void parseFac() {
-        if (isIdent(peek())) {
-            expectIdent();
-        } else if (isInteger(peek())) {
-            expectInteger();
+        if (isIdent(peek()) || isInteger(peek())) {
+            operandStack.push(getNextToken());
         } else if (peek().equals("(")) {
             expect("(");
             parseExp();
@@ -218,30 +219,10 @@ public class SyntaxAnalyzer {
     }
 
     private void expectRelop() {
-        String token = peek();
-        if (token.equals("==") || token.equals("!=") || token.equals(">") ||
-                token.equals("<") || token.equals(">=") || token.equals("<=")) {
-            getNextToken();
-        } else {
+        String token = getNextToken();
+        if (!(token.equals("==") || token.equals("!=") || token.equals(">") ||
+                token.equals("<") || token.equals(">=") || token.equals("<="))) {
             throw new RuntimeException("Expected relational operator but found '" + token + "'");
-        }
-    }
-
-    private void expectAddop() {
-        String token = peek();
-        if (token.equals("+") || token.equals("-")) {
-            getNextToken();
-        } else {
-            throw new RuntimeException("Expected '+' or '-' but found '" + token + "'");
-        }
-    }
-
-    private void expectMop() {
-        String token = peek();
-        if (token.equals("*") || token.equals("/")) {
-            getNextToken();
-        } else {
-            throw new RuntimeException("Expected '*' or '/' but found '" + token + "'");
         }
     }
 
@@ -257,15 +238,19 @@ public class SyntaxAnalyzer {
         return token.matches("\\d+"); // Matches one or more digits
     }
 
-
     private String peek() {
-    	if (!tokens.isEmpty()) {
+        if (!tokens.isEmpty()) {
             return tokens.get(0);
         } else {
-        	return null;
+            throw new RuntimeException("Unexpected end of input: no more tokens available");
         }
     }
 
+    private String getNextToken() {
+        String token = peek();
+        tokens.remove(0);
+        return token;
+    }
 
     private void expect(String expectedToken) {
         String token = getNextToken();
@@ -273,14 +258,13 @@ public class SyntaxAnalyzer {
             throw new RuntimeException("Expected '" + expectedToken + "' but found '" + token + "'");
         }
     }
-    
+
     private void expectInteger() {
         String token = getNextToken();
         if (!isInteger(token)) {
             throw new RuntimeException("Expected an integer but found '" + token + "'");
         }
     }
-
 
     private void expectIdent() {
         String token = getNextToken();
@@ -289,20 +273,10 @@ public class SyntaxAnalyzer {
         }
     }
 
-    private String getNextToken() {
-        String token = peek();
-        if (token != null) {
-            tokens.remove(0);
-            return token;
-        } else {
-            throw new RuntimeException("Unexpected end of input: no more tokens available");
-        }
-    }
-
-
     private boolean isIdent(String token) {
         return token.matches("[a-zA-Z][a-zA-Z0-9_()]*") && !isKeyword(token);
     }
+
     private boolean isKeyword(String token) {
         return token.equals("IF") || token.equals("WHILE") || token.equals("DO") || token.equals("CALL");
     }
