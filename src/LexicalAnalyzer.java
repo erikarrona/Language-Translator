@@ -423,8 +423,8 @@ public class LexicalAnalyzer {
                 {-1, -1, -1, -1, -1, -1,  3,  4, -1, -1, -1, -1},  // State 7
                 {-1,  9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},  // State 8
                 {-1, -1, -1, -1, -1, -1,  3,  8,  0, -1, -1, -1},  // State 9
-                {-1, -1, -1, -1, 11, -1, -1, -1, -1, -1, 10, -1}, // State 10
-                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, -1}, // State 11
+                {-1, -1, -1, -1, 11, -1, -1, -1, -1, -1, 10, 12}, // State 10
+                {10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10}, // State 11
                 {-1, 13, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}, // State 12
                 {-1, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1} // State 13
                 
@@ -454,10 +454,9 @@ public class LexicalAnalyzer {
                 col = getClassificationCode(classification);
                 currentState = symbolTransition(currentState, col);
                 
-                
                 if(currentState == 2) {	//from state 1, case <var> is program name
                 	symbols[symbolTableIndex] = token;
-                	classifications[symbolTableIndex] = "$program name";
+                	classifications[symbolTableIndex] = "$program_name";
                 	values[symbolTableIndex] = " ";
                 	addresses[symbolTableIndex] = codeAddress;
                 	segments[symbolTableIndex] = "CS";
@@ -498,7 +497,7 @@ public class LexicalAnalyzer {
                 } else if(currentState == 10) {
                 	tokenClassification = " ";
                 } else if(currentState == 11){
-                	symbols[symbolTableIndex] = token;
+                	symbols[symbolTableIndex] = "Lit" + token;
                 	classifications[symbolTableIndex] = "NumLit";
                 	values[symbolTableIndex] = token;
                 	addresses[symbolTableIndex] = dataAddress;
@@ -512,7 +511,7 @@ public class LexicalAnalyzer {
                 	values[symbolTableIndex] = " ";
                 	addresses[symbolTableIndex] = codeAddress;
                 	segments[symbolTableIndex] = "CS";
-                	dataAddress += 2;
+                	codeAddress += 2;
                 	symbolTableIndex++;	
                 } else {
                 	continue;
@@ -524,8 +523,8 @@ public class LexicalAnalyzer {
     		for (int i = 0; i < symbolTableIndex; i++) {
     		    bw.write(String.format("%-10s %-15s %-10s %-10s %-10s\n", symbols[i], classifications[i], values[i], addresses[i], segments[i]));
     		}
-    		for (int j = 1; j < 4; j++) {
-    		    bw.write(String.format("%-10s %-15s %-10s %-10s %-10s\n", "Temp" + j, "Var(Int)", "", dataAddress, "DS"));
+    		for (int j = 1; j < 5; j++) {
+    		    bw.write(String.format("%-10s %-15s %-10s %-10s %-10s\n", "T" + j, "Var(Int)", "0", dataAddress, "DS"));
     		    dataAddress += 2;
     		}
 
@@ -600,7 +599,7 @@ public class LexicalAnalyzer {
         }
     }
     
-    private List<String> readTokens(String tokensFile) {
+    public List<String> readTokens(String tokensFile) {
         List<String> tokens = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(tokensFile))) {
             String line;
@@ -618,32 +617,6 @@ public class LexicalAnalyzer {
         return tokens;
     }
     
-    public static void main(String[] args) {
-        if (args.length != 1) {
-            System.out.println("Usage: java LexicalAnalyzer inputFilename");
-            return;
-        }
-
-        String inputFileName = args[0];
-        String tokensFile = "tokens.txt";
-        String symbolFile = "symbol_table.txt";
-
-        // Perform lexical analysis
-        LexicalAnalyzer analyzer = new LexicalAnalyzer();
-        analyzer.analyze(inputFileName, tokensFile);
-        System.out.println("Tokens generated, outputted in " + tokensFile);
-
-        // Read tokens
-        List<String> tokens = analyzer.readTokens(tokensFile);
-
-        // Perform syntax analysis
-        SyntaxAnalyzer syntaxAnalyzer = new SyntaxAnalyzer(tokens);
-        syntaxAnalyzer.analyze();
-        System.out.println("Syntax analysis completed.");
-
-        // Analyze tokens
-        analyzer.analyzeTokens(tokensFile, symbolFile);
-        System.out.println("Symbol Table analyzed, outputted in " + symbolFile);
-    }
+    
 
 }

@@ -1,0 +1,36 @@
+section .data
+Pgm1 dw 0
+M dw 13
+N dw 56
+L dw 7
+X dw  0 
+Y dw  0 
+Z dw  0 
+Lit97 dw 97
+Lit18 dw 18
+Lit3 dw 3
+T1 dw 0
+T2 dw 0
+T3 dw 0
+T4 dw 0
+
+section .text
+global _start
+_start:
+mov ax, [97]
+mov [Y], ax
+mov ax, [M]
+imul ax, [N]
+mov [T1], ax
+mov ax, [T1]
+add ax, [18]
+mov [T1], ax
+mov ax, [Y]
+cwd
+idiv word [3]
+mov [T2], ax
+mov ax, [T1]
+sub ax, [T2]
+mov [T2], ax
+mov ax, [T2]
+mov [X], ax

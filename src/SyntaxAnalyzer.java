@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 public class SyntaxAnalyzer {
@@ -5,20 +8,59 @@ public class SyntaxAnalyzer {
     private Stack<String> operatorStack;
     private Stack<String> operandStack;
     private int tempCount;
+    private List<String> tempPool;
+    private BufferedWriter writer;
 
-    public SyntaxAnalyzer(List<String> tokens) {
+    public SyntaxAnalyzer(List<String> tokens, String outputFile) {
         this.tokens = tokens;
         this.operatorStack = new Stack<>();
         this.operandStack = new Stack<>();
         this.tempCount = 1;
+        this.tempPool = new ArrayList<>();
+        try {
+            this.writer = new BufferedWriter(new FileWriter(outputFile));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void analyze() {
         try {
             parseProgram();
             System.out.println("Syntax analysis successful.");
+            closeWriter();
         } catch (Exception e) {
             System.out.println("Syntax error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    private String getTempVariable() {
+        if (!tempPool.isEmpty()) {
+            return tempPool.remove(0); 
+        } else {
+            return "T" + tempCount++; 
+        }
+    }
+
+    private void recycleTempVariable(String temp) {
+        tempPool.add(temp); 
+    }
+
+    private void writeQuad(String quad) {
+        try {
+            writer.write(quad + "\n");
+            writer.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("Error writing quad: " + quad);
+        }
+    }
+
+    private void closeWriter() {
+        try {
+            writer.close();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -131,7 +173,8 @@ public class SyntaxAnalyzer {
         expect("=");
         parseExp();
         String result = operandStack.pop();
-        System.out.println("=, " + identifier + ", " + result + ", " + "N");
+        String quad = "=, " + identifier + ", " + result + ", " + "N";
+        writeQuad(quad);
     }
 
     private void parseCallStmt() {
@@ -187,9 +230,10 @@ public class SyntaxAnalyzer {
             parseTerm();
             String operand2 = operandStack.pop();
             String operand1 = operandStack.pop();
-            String temp = "T" + tempCount++;
+            String temp = getTempVariable(); // Obtain a new temporary variable
             operandStack.push(temp);
-            System.out.println(operator + ", " + operand1 + ", " + operand2 + ", " + temp);
+            String quad = operator + ", " + operand1 + ", " + operand2 + ", " + temp;
+            writeQuad(quad);
         }
     }
 
@@ -200,9 +244,11 @@ public class SyntaxAnalyzer {
             parseFac();
             String operand2 = operandStack.pop();
             String operand1 = operandStack.pop();
-            String temp = "T" + tempCount++;
+            String temp = getTempVariable(); // Obtain a new temporary variable
             operandStack.push(temp);
-            System.out.println(operator + ", " + operand1 + ", " + operand2 + ", " + temp);
+            String quad = operator + ", " + operand1 + ", " + operand2 + ", " + temp;
+            writeQuad(quad);
+            recycleTempVariable(temp); // Release the temporary variable
         }
     }
 
