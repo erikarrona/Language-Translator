@@ -1,15 +1,34 @@
 SYMBOL     CLASSIFICATION  VALUE      ADDRESS    SEGMENT   
-Pgm1       $program_name              0          CS        
-M          ConstVar        13         0          DS        
-N          ConstVar        56         2          DS        
-L          ConstVar        7          4          DS        
-X          Variable        ?          6          DS        
-Y          Variable        ?          8          DS        
-Z          Variable        ?          10         DS        
-Lit97      NumLit          97         12         DS        
-Lit18      NumLit          18         14         DS        
-Lit3       NumLit          3          16         DS        
-T1         Var(Int)        0          18         DS        
-T2         Var(Int)        0          20         DS        
-T3         Var(Int)        0          22         DS        
-T4         Var(Int)        0          24         DS        
+LargestCommonDenominator $program_name              0          CS        
+M          ConstVar        7          0          DS        
+N          ConstVar        85         2          DS        
+X          Variable        ?          4          DS        
+Y          Variable        ?          6          DS        
+Z          Variable        ?          8          DS        
+Q          Variable        ?          10         DS        
+R          Variable        ?          12         DS        
+Multiply() Procedure                  2          CS        
+A          Variable        ?          14         DS        
+B          Variable        ?          16         DS        
+Lit0       NumLit          0          18         DS        
+Lit0       NumLit          0          20         DS        
+Lit2       NumLit          2          22         DS        
+Lit2       NumLit          2          24         DS        
+Divide()   Procedure                  4          CS        
+W          Variable        ?          26         DS        
+Lit0       NumLit          0          28         DS        
+Lit2       NumLit          2          30         DS        
+Lit2       NumLit          2          32         DS        
+Lit2       NumLit          2          34         DS        
+Lit1       NumLit          1          36         DS        
+GCD()      Procedure                  6          CS        
+F          Variable        ?          38         DS        
+G          Variable        ?          40         DS        
+Lit25      NumLit          25         42         DS        
+Lit3       NumLit          3          44         DS        
+Lit84      NumLit          84         46         DS        
+Lit36      NumLit          36         48         DS        
+T1         Var(Int)        0          50         DS        
+T2         Var(Int)        0          52         DS        
+T3         Var(Int)        0          54         DS        
+T4         Var(Int)        0          56         DS        

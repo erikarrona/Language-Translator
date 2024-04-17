@@ -7,45 +7,63 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeOptimizer {
+    
+    private String quadFile;
+    private String optimizedQuadFile;
 
-    public static void main(String[] args) {
-        String inputFileName = "codeSegment.txt";
-        String outputFileName = "optimizedCodeSegment.txt";
-
-        List<String> originalCode = readAssemblyFromFile(inputFileName);
-        List<String> optimizedCode = optimizeAssembly(originalCode);
-
-        writeAssemblyToFile(outputFileName, optimizedCode);
+    public CodeOptimizer(String quadFile, String optimizedQuadFile) {
+        this.quadFile = quadFile;
+        this.optimizedQuadFile = optimizedQuadFile;
     }
 
-    private static List<String> readAssemblyFromFile(String fileName) {
-        List<String> assemblyCode = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+    public void optimize() {
+        List<String> quads = readQuadsFromFile(quadFile);
+        List<String> optimizedQuads = optimizeQuads(quads);
+        writeQuadsToFile(optimizedQuads, optimizedQuadFile);
+        System.out.println("Quads optimized and written to file: " + optimizedQuadFile);
+    }
+
+    private List<String> readQuadsFromFile(String quadFile) {
+        List<String> quads = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(quadFile))) {
             String line;
             while ((line = br.readLine()) != null) {
-                assemblyCode.add(line);
+                quads.add(line.trim());
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return assemblyCode;
+        return quads;
     }
 
-    private static List<String> optimizeAssembly(List<String> originalCode) {
+    private List<String> optimizeQuads(List<String> quads) {
         // Implement optimization logic here
-        // Example: Remove redundant instructions, minimize memory accesses, etc.
-        // For demonstration, let's just return the original code
-        return originalCode;
+        // For example, you could remove redundant or dead code,
+        // perform constant folding, or any other optimization techniques
+        // Return the optimized list of quads
+        return quads;
     }
 
-    private static void writeAssemblyToFile(String fileName, List<String> assemblyCode) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(fileName))) {
-            for (String line : assemblyCode) {
-                bw.write(line + "\n");
+    private void writeQuadsToFile(List<String> quads, String outputFile) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(outputFile))) {
+            for (String quad : quads) {
+                bw.write(quad + "\n");
             }
-            System.out.println("Optimized assembly code written to " + fileName);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void main(String[] args) {
+        if (args.length != 2) {
+            System.out.println("Usage: java CodeOptimizer inputQuadFile outputOptimizedQuadFile");
+            return;
+        }
+
+        String inputQuadFile = args[0];
+        String outputOptimizedQuadFile = args[1];
+
+        CodeOptimizer optimizer = new CodeOptimizer(inputQuadFile, outputOptimizedQuadFile);
+        optimizer.optimize();
     }
 }

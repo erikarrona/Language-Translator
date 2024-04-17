@@ -11,6 +11,7 @@ public class Main {
         String tokensFile = "tokens.txt";
         String symbolFile = "symbol_table.txt";
         String quadFile = "quads.txt";
+        String optimizedQuads = "optimizedQuads.txt";
         String csFile = "codeSegment.txt";
 
         // Perform lexical analysis
@@ -18,6 +19,10 @@ public class Main {
         analyzer.analyze(inputFileName, tokensFile);
         System.out.println("Tokens generated, outputted in " + tokensFile);
 
+        // Analyze tokens
+        analyzer.analyzeTokens(tokensFile, symbolFile);
+        System.out.println("Symbol Table analyzed, outputted in " + symbolFile);
+        
         // Read tokens
         List<String> tokens = analyzer.readTokens(tokensFile);
 
@@ -26,10 +31,9 @@ public class Main {
         syntaxAnalyzer.analyze();
         System.out.println("Syntax analysis completed.");
 
-        // Analyze tokens
-        analyzer.analyzeTokens(tokensFile, symbolFile);
-        System.out.println("Symbol Table analyzed, outputted in " + symbolFile);
         
-        CodeGenerator.generateCode(quadFile, symbolFile, csFile);
+        CodeOptimizer optimizer = new CodeOptimizer(quadFile, optimizedQuads);
+        
+        CodeGenerator.generateCode(optimizedQuads, symbolFile, csFile);
     }
 }
