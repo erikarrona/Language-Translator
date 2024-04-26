@@ -25,10 +25,8 @@ public class CodeGenerator {
                 String classification = parts[1];
                 String value = parts[2];
                 if (!value.equals("?") && classification.equals("ConstVar")) {
-                	System.out.println(classification);
                     writer.write("\t" + symbolName + " dw " + value + "\n");
                 } else if (!classification.equals("$program_name") && !classification.equals("Procedure")){
-                	System.out.println(classification);
                 	writer.write("\t" + symbolName + " dw " + " 0 \n");
                 }
             }
