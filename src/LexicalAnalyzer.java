@@ -6,7 +6,8 @@ public class LexicalAnalyzer {
     private Map<String, Integer> tokenStateMap = new HashMap<>();
     private Map<String, String> classifiedTokens = new HashMap<>();
     private static int codeAddress = 0, dataAddress = 0;
-
+    private Set<String> symbolSet = new HashSet<>();
+    
     static {
         initializeStateTable();
     }
@@ -324,7 +325,7 @@ public class LexicalAnalyzer {
             case 3:
             case 4:
                 return "<integer>";
-            
+            case 5:
             case 6:
                 switch (token) {
                     case "CLASS":
@@ -347,6 +348,9 @@ public class LexicalAnalyzer {
                         return "$PROCEDURE";
                     case "ODD":
                     	return "$ODD";
+                    case "THEN":
+                    	return "$THEN";
+                    	
                     default:
                         return "<var>";
                 }
@@ -429,7 +433,8 @@ public class LexicalAnalyzer {
                 {-1, -1, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1} // State 13
                 
         };
-    
+
+
     public void analyzeTokens(String tokensFile, String symbolFile) {
     	try (
     		BufferedReader br = new BufferedReader(new FileReader(tokensFile)); 
@@ -451,6 +456,7 @@ public class LexicalAnalyzer {
                 String[] parts = line.split("\t");
                 String token = parts[0];
                 String classification = parts[1];
+                //System.out.println(line);
                 col = getClassificationCode(classification);
                 currentState = symbolTransition(currentState, col);
                 
@@ -497,13 +503,16 @@ public class LexicalAnalyzer {
                 } else if(currentState == 10) {
                 	tokenClassification = " ";
                 } else if(currentState == 11){
-                	symbols[symbolTableIndex] = "Lit" + token;
-                	classifications[symbolTableIndex] = "NumLit";
-                	values[symbolTableIndex] = token;
-                	addresses[symbolTableIndex] = dataAddress;
-                	segments[symbolTableIndex] = "DS";
-                	dataAddress += 2;
-                	symbolTableIndex++;	
+                	if (!symbolSet.contains(token)) {
+	                	symbols[symbolTableIndex] = "Lit" + token;
+	                	classifications[symbolTableIndex] = "NumLit";
+	                	values[symbolTableIndex] = token;
+	                	addresses[symbolTableIndex] = dataAddress;
+	                	segments[symbolTableIndex] = "DS";
+	                	dataAddress += 2;
+	                	symbolSet.add(token);
+	                	symbolTableIndex++;	
+                	}
                 	
                 } else if(currentState == 13){
                 	symbols[symbolTableIndex] = token;
@@ -544,6 +553,7 @@ public class LexicalAnalyzer {
 	}
 
 	private static int symbolTransition(int currentState, int classification) {
+		//System.out.println(currentState);
         int nextState = SYMBOL_STATE_TABLE[currentState][classification];
         if (nextState == -1) {
         	return currentState;
@@ -560,6 +570,7 @@ public class LexicalAnalyzer {
             case "WHILE":
             case "DO":
             case "ODD":
+            case "THEN":
                 return true;
             default:
                 return false;

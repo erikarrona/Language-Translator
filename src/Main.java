@@ -30,10 +30,8 @@ public class Main {
         SyntaxAnalyzer syntaxAnalyzer = new SyntaxAnalyzer(tokens, quadFile);
         syntaxAnalyzer.analyze();
         System.out.println("Syntax analysis completed.");
+        
+        CodeGenerator.generateCode(quadFile, symbolFile, csFile);
 
-        
-        CodeOptimizer optimizer = new CodeOptimizer(quadFile, optimizedQuads);
-        
-        CodeGenerator.generateCode(optimizedQuads, symbolFile, csFile);
     }
 }

@@ -11,24 +11,8 @@ Multiply() Procedure                  2          CS
 A          Variable        ?          14         DS        
 B          Variable        ?          16         DS        
 Lit0       NumLit          0          18         DS        
-Lit0       NumLit          0          20         DS        
-Lit2       NumLit          2          22         DS        
-Lit2       NumLit          2          24         DS        
-Divide()   Procedure                  4          CS        
-W          Variable        ?          26         DS        
-Lit0       NumLit          0          28         DS        
-Lit2       NumLit          2          30         DS        
-Lit2       NumLit          2          32         DS        
-Lit2       NumLit          2          34         DS        
-Lit1       NumLit          1          36         DS        
-GCD()      Procedure                  6          CS        
-F          Variable        ?          38         DS        
-G          Variable        ?          40         DS        
-Lit25      NumLit          25         42         DS        
-Lit3       NumLit          3          44         DS        
-Lit84      NumLit          84         46         DS        
-Lit36      NumLit          36         48         DS        
-T1         Var(Int)        0          50         DS        
-T2         Var(Int)        0          52         DS        
-T3         Var(Int)        0          54         DS        
-T4         Var(Int)        0          56         DS        
+Lit2       NumLit          2          20         DS        
+T1         Var(Int)        0          22         DS        
+T2         Var(Int)        0          24         DS        
+T3         Var(Int)        0          26         DS        
+T4         Var(Int)        0          28         DS        

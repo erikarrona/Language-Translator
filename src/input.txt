@@ -3,6 +3,7 @@ CLASS Pgm1 {
 	VAR X, Y, Z;
 	/* meow meow meow meow */
 
+	IF A > B THEN A = A + B;
 	Y = 97;
 	X = M * N + 18 - Y / 3;
 }

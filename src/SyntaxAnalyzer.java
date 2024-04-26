@@ -5,15 +5,16 @@ import java.util.*;
 
 public class SyntaxAnalyzer {
     private List<String> tokens;
-    private Stack<String> operatorStack;
     private Stack<String> operandStack;
     private int tempCount;
     private List<String> tempPool;
     private BufferedWriter writer;
-
+    private int labelCount = 1;
+    private Stack<Integer> startWhileStack = new Stack<>();
+    private Stack<Integer> endFixUpStack = new Stack<>();
+    
     public SyntaxAnalyzer(List<String> tokens, String outputFile) {
         this.tokens = tokens;
-        this.operatorStack = new Stack<>();
         this.operandStack = new Stack<>();
         this.tempCount = 1;
         this.tempPool = new ArrayList<>();
@@ -131,13 +132,15 @@ public class SyntaxAnalyzer {
     private void parseProcedureDefPart() {
         if (peek().equals("PROCEDURE")) {
             expect("PROCEDURE");
-            expectIdent();
+            String procedureName = getNextToken(); // Get the name of the procedure
             if (peek().equals("(")) {
                 expect("(");
                 expect(")");
             }
             if (peek().equals("{")) {
                 expect("{");
+                String quad = "PROCEDURE, " + procedureName + ", N, N"; // Generate quad for the procedure definition
+                writeQuad(quad);
                 parseBlock();
                 expect("}");
             }
@@ -179,11 +182,14 @@ public class SyntaxAnalyzer {
 
     private void parseCallStmt() {
         expect("CALL");
-        expectIdent();
+        String procedureName = getNextToken(); // Get the name of the procedure being called
+        String quad = "CALL, " + procedureName + ", N, N"; // Generate quad for the procedure call
+        writeQuad(quad);
         if (peek().equals("{")) {
-            parseBlock();
+            parseBlock(); // If the procedure has a block of code, parse it
         }
     }
+
 
     private void parseCompoundStmt() {
         expect("{");
@@ -199,27 +205,81 @@ public class SyntaxAnalyzer {
     }
 
     private void parseIfStmt() {
+    	int label = getLabel();
+    	String quad;
         expect("IF");
-        parseBE();
+        int L1 = label;
+        int E1 = label;
+        quad = "IF, L" + L1 + ", ?, ?";
+        writeQuad(quad);
+        parseBE(L1, E1);
         expect("THEN");
+        quad = "THEN, L" + L1 + ", E" + E1 + ", ?";
+        writeQuad(quad);
         parseStmt();
+        quad = "L" + L1 + ", ?, ?, ?";
+        writeQuad(quad);
+        if (peek().equals("ELSE")) {
+        	expect("ELSE");
+        	quad = "ELSE, ?, ?, ?";
+        	writeQuad(quad);
+        }
     }
 
+    private int getLabel() {
+        return labelCount++;
+    }
+    
     private void parseWhileStmt() {
+    	int label = getLabel();
+        int W1 = label;
+        int L1 = label;
+        int fixUpAddress = label;
+
+        startWhileStack.push(W1);
+
         expect("WHILE");
-        parseBE();
+
+        String quad = "WHILE, W" + W1 + ", ?, ?";
+        writeQuad(quad);
+
+        parseBE(W1, L1);
+
         expect("DO");
+
+        quad = "L" + L1 + ", ?, ?, ?";
+        writeQuad(quad);
+
         parseStmt();
+
+        quad = "JUMP, W" + W1 + ", ?, ?";
+        writeQuad(quad);
+
+        endFixUpStack.push(fixUpAddress);
+        quad = "L" + fixUpAddress + ", ?, ?, ?";
+        writeQuad(quad);
+        endFixUpStack.pop();
+
+        startWhileStack.pop();
     }
 
-    private void parseBE() {
+    
+    private void parseBE(int L1, int LE) {
+        String temp = getTempVariable(); // Obtain a new temporary variable
         if (peek().equals("ODD")) {
             expect("ODD");
             parseExp();
+            String operand1 = operandStack.pop();
+            String quad = "ODD, " + operand1 + ", " + temp + ", N";
+            writeQuad(quad);
         } else {
             parseExp();
-            expectRelop();
+            String operand2 = operandStack.pop();
+            String operator = getNextToken();
             parseExp();
+            String operand1 = operandStack.pop();
+            String quad = operator + ", " + operand1 + ", " + operand2 + ", " + temp;
+            writeQuad(quad);
         }
     }
 

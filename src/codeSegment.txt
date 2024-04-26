@@ -1,120 +1,66 @@
-section .data
-LargestCommonDenominator dw 0
-M dw 7
-N dw 85
-X dw  0 
-Y dw  0 
-Z dw  0 
-Q dw  0 
-R dw  0 
-Multiply() dw 2
-A dw  0 
-B dw  0 
-Lit0 dw 0
-Lit0 dw 0
-Lit2 dw 2
-Lit2 dw 2
-Divide() dw 4
-W dw  0 
-Lit0 dw 0
-Lit2 dw 2
-Lit2 dw 2
-Lit2 dw 2
-Lit1 dw 1
-GCD() dw 6
-F dw  0 
-G dw  0 
-Lit25 dw 25
-Lit3 dw 3
-Lit84 dw 84
-Lit36 dw 36
-T1 dw 0
-T2 dw 0
-T3 dw 0
-T4 dw 0
+.data
+	M dw 7
+	N dw 85
+	X dw  0 
+	Y dw  0 
+	Z dw  0 
+	Q dw  0 
+	R dw  0 
+	A dw  0 
+	B dw  0 
+	Lit0 dw  0 
+	Lit2 dw  0 
+	T1 dw  0 
+	T2 dw  0 
+	T3 dw  0 
+	T4 dw  0 
 
-section .text
-global _start
-_start:
-mov ax, [X]
-mov [A], ax
-mov ax, [Y]
-mov [B], ax
-mov ax, [0]
-mov [Z], ax
-mov ax, [Z]
-add ax, [A]
-mov [T1], ax
-mov ax, [T1]
-mov [Z], ax
-mov ax, [2]
-imul ax, [A]
-mov [T2], ax
-mov ax, [T2]
-mov [A], ax
-mov ax, [B]
-cwd
-idiv word [2]
-mov [T2], ax
-mov ax, [T2]
-mov [B], ax
-mov ax, [X]
-mov [R], ax
-mov ax, [0]
-mov [Q], ax
-mov ax, [Y]
-mov [W], ax
-mov ax, [2]
-imul ax, [W]
-mov [T2], ax
-mov ax, [T2]
-mov [W], ax
-mov ax, [2]
-imul ax, [Q]
-mov [T2], ax
-mov ax, [T2]
-mov [Q], ax
-mov ax, [W]
-cwd
-idiv word [2]
-mov [T2], ax
-mov ax, [T2]
-mov [W], ax
-mov ax, [R]
-sub ax, [W]
-mov [T2], ax
-mov ax, [T2]
-mov [R], ax
-mov ax, [Q]
-add ax, [1]
-mov [T3], ax
-mov ax, [T3]
-mov [Q], ax
-mov ax, [X]
-mov [F], ax
-mov ax, [Y]
-mov [G], ax
-mov ax, [G]
-sub ax, [F]
-mov [T4], ax
-mov ax, [T4]
-mov [G], ax
-mov ax, [F]
-sub ax, [G]
-mov [T5], ax
-mov ax, [T5]
-mov [F], ax
-mov ax, [F]
-mov [Z], ax
-mov ax, [M]
-mov [X], ax
-mov ax, [N]
-mov [Y], ax
-mov ax, [25]
-mov [X], ax
-mov ax, [3]
-mov [Y], ax
-mov ax, [84]
-mov [X], ax
-mov ax, [36]
-mov [Y], ax
+PgmStart:
+
+Multiply():
+	mov ax, [X]
+	mov [A], ax
+	mov ax, [Y]
+	mov [B], ax
+	mov ax, [0]
+	mov [Z], ax
+W1	mov ax, [B]
+	cmp ax, 0
+	mov ax, [A]
+	cmp ax, B
+	jle L2
+	mov ax, [C]
+	cmp ax, D
+	jne L3
+	mov ax, [X]
+	mov [Y], ax
+	jmp E1
+L1	nop
+	mov ax, [Z]
+	mov [Y], ax
+	jmp E2
+L2	nop
+	mov ax, [N]
+	mov [M], ax
+	mov ax, [2]
+	imul ax, [A]
+	mov [T4], ax
+	mov ax, [T4]
+	mov [A], ax
+	mov ax, [B]
+	cwd
+	idiv word [2]
+	mov [T4], ax
+	mov ax, [T4]
+	mov [B], ax
+	jmp W1
+L1	nop
+	mov ax, [M]
+	mov [X], ax
+	mov ax, [N]
+	mov [Y], ax
+	call Multiply()
+fini: 
+	mov ah, 4ch
+	int 21h
+END PGM
